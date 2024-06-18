@@ -1,0 +1,8 @@
+dirIO_light.sh 
+_ version without temporary additional files on shared memory
+_ reduced load on system and cpu
+_ updationg io <1s with read timeout <1s, e.g. -t 0.2 (factor for MB/s required)
+
+TODO:
+dirIO_graphical.sh
+_ version shows graphical symbols with increased io data rate
