@@ -21,7 +21,7 @@ keysdef=\
 "             resume            == ' ' or 'r' \n"\
 "             quit              == 'q' or 'Q' \n"\
 "                                             \n"\
-"       version 0.1                           \n"\      
+"       version 0.1                           \n"\
 "       June 15, 2024                         \n"
 
 if [ -z "$1" ] || [ ! "$avail" == 1 ] || [ "$#" -ne 1 ]; then
