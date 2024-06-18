@@ -1,8 +1,10 @@
 # dirIO
-Linux, cmdline script, directory monitoring, e.g. data io rate (MB/s)
+    Linux cmdline script for directory monitoring, e.g. data io (MB/s)
 
 
-./dirIO.sh --help /example/path
+### syntax and keys 
+
+    ./dirIO.sh --help 
  
 
        Usage: ./dirIO__du.sh  /directory/to/monitor
@@ -15,7 +17,10 @@ Linux, cmdline script, directory monitoring, e.g. data io rate (MB/s)
               version 0.1                           
               June 15, 2024                         
 
-
+### start
+    ./dirIO.sh /path/to/directory/for/monitoring/data_io
 
 ### chatGPT assisted code creation
+
+
 
