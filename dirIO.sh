@@ -20,7 +20,7 @@ keysdef=\
 "             pause             == 'p'        \n"\
 "             resume            == ' ' or 'r' \n"\
 "             quit              == 'q' or 'Q' \n"\
-"                                             \n"
+"                                             \n"\
 "       version 0.1                           \n"\      
 "       June 15, 2024                         \n"
 
