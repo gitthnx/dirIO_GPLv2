@@ -5,4 +5,4 @@ _ updationg io <1s with read timeout <1s, e.g. -t 0.2 (factor for MB/s required)
 
 TODO:
 dirIO_graphical.sh
-_ version shows graphical symbols with increased io data rate
+_ version shows graphical symbols on bar graph with increased io data rate
