@@ -41,7 +41,7 @@ while true; do
   elif [ "$key" = "p" ]; then
     paused=true
     echo "Output paused. Press space or key 'r' to resume."
-  elif [ "$key" = " " ] || [ "$key" = "Q" ]; then
+  elif [ "$key" = " " ] || [ "$key" = "r" ]; then
     paused=false
     echo "Output resumed."
   fi
