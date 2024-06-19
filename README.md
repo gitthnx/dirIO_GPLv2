@@ -1,6 +1,9 @@
 # dirIO
+
     Linux cmdline script for directory monitoring, e.g. data io (MB/s)
 
+![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_graphical.png)
+    
 
 ### syntax and keys 
 
@@ -20,7 +23,5 @@
 ### start
     ./dirIO.sh /path/to/directory/for/monitoring/data_io
 
+
 ### chatGPT assisted code creation
-
-
-
