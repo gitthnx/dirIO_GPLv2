@@ -27,6 +27,8 @@
 ### start
     ./dirIO.sh /path/to/directory/for/monitoring/data_io
 
+### issues
+    'graphical' visualization only partially implemented within scripts for testing functionality options in <tmp> directory
 
 ### chatGPT assisted code creation, initial prompt command:
     Create a code example for data input output monitoring and data rate output within a bash shell command line. Create this script as bash shell script. Create this script for filesystem data input and data output and data rates from or to this directory, that is declared with script variables on startup. Add request for keyboard input for stopping that script on pressing q or Q. Add keyboard input scan for pausing output with pressing p and resuming with space key.
