@@ -1,13 +1,13 @@
 <p align="left">
-  <a href="https://github.com/gitthnx/dirIO_GPLv2"><img width="750" src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_graphical.png" /></a>
+  <a href="https://github.com/gitthnx/dirIO_GPLv2"><img width="750" src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png" /></a>
 </p>
 
 # dirIO
 
     Linux cmdline script for directory monitoring, e.g. data io (MB/s)
 
-<!-- ![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_graphical.png) -->
-    
+![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_graphical.png)
+<!-- p align="left"> https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png </p -->   
 
 ### syntax and keys 
 
