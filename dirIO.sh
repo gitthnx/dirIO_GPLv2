@@ -88,11 +88,11 @@ monitor_io() {
 
 # Function to calculate data rate output
 calculate_data_rate() {
-    echo "$start_date   start_dir_size $start_dir_size  current_dir_size $current_dir_size  monitoring time io $(( ($current_dir_size-$start_dir_size)/1024 )) kb"
+    echo "$start_date   start_dir_size $((start_dir_size/1024)) kB  current_dir_size $((current_dir_size/1024)) kB  monitoring time io $(( ($current_dir_size-$start_dir_size)/1024 )) kb"
     current_dir_size=$(find "$directory" -type f,d | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
 
     data_rate_output=$((current_dir_size - dir_size))
-    echo "  data_rate_io $data_rate_output"
+    echo "  data_rate_io $data_rate_output B/s"
     dir_size=$((current_dir_size))
     if [ $((data_rate_output)) -le 0 ]; then
       input_sum=$(( input_sum+data_rate_output ))
