@@ -144,8 +144,8 @@ while true; do
     exit 1
   elif [ "$key" = "p" ]; then
     paused=true
-    echo "Output paused. Press space to resume."
-  elif [ "$key" = " " ]; then
+    echo "Output paused. Press space or key 'r' to resume."
+  elif [ "$key" = " " ] || [ "$key" = "r" ]; then
     paused=false
     echo "Output resumed."
   elif [ "$key" = "n" ]; then
