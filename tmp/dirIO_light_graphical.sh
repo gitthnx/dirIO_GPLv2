@@ -7,12 +7,12 @@ total_output=0
 start_time=$(date +%s)
 paused=false
 
-dir_size=$(find "$directory" -type f | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+dir_size=$(find "$directory" -type f -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
 #total_output=$((dir_size))
 
 # Function to calculate data rate output
 calculate_data_rate() {
-    current_dir_size=$(find "$directory" -type f | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+    current_dir_size=$(find "$directory" -type f -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
 
     data_rate_output=$((current_dir_size - dir_size))
     dir_size=$((current_dir_size))
