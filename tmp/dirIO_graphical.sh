@@ -41,7 +41,7 @@ start_time=$(date +%s)
 paused=false
 err=false
 
-dir_size=$(find "$directory" -type f,d | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+dir_size=$(find "$directory" -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
 dir_size_du=$(du -sb "$directory" | awk '{print $1}')
 start_dir_size=$((dir_size_du))
 current_dir_size=$((dir_size))
@@ -88,7 +88,13 @@ monitor_io() {
 # Function to calculate data rate output
 calculate_data_rate() {
     echo "$start_date   start_dir_size $((start_dir_size/1024)) kB  current_dir_size $((current_dir_size/1024)) kB  monitoring time io $(( ($current_dir_size-$start_dir_size)/1024 )) kb"
-    current_dir_size=$(find "$directory" -type f,d | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+
+# find "$directory" -type d  | xargs stat --format="%s" | awk '{s+=$1} END {print s}' | awk '{print $1/1024/1024" GB"}'
+# find "$directory" -type d,f  -printf '"%h/%f"\n'  | xargs stat --format="%s" | awk '{s+=$1} END {print s}' | awk '{print $1/1024/1024/1024" GB"}'
+# du -sm  /dev/shm | awk '{print $1/1024" GB"}'
+
+#    current_dir_size=$(find "$directory" -type f,d | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+    current_dir_size=$(find "$directory" -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
 
     data_rate_output=$((current_dir_size - dir_size))
     echo "  data_rate_io $data_rate_output B/s"
@@ -102,11 +108,19 @@ calculate_data_rate() {
     fi
 
     echo -e -n "  Data rate io: $data_rate_output bytes/s  `echo  \"scale=4; $data_rate_output/1024/1024\" | bc` MB/s"
+#    IFS=';' read -sdR -p $'\E[6n' ROW COL
+#    #echo -e -n " ${ROW#*[}"
+#    pos=${ROW#*[}
+#    #echo $pos
+}
+
+# Function for graphical representation of data IO
+graphical_output() {
     IFS=';' read -sdR -p $'\E[6n' ROW COL
     #echo -e -n " ${ROW#*[}"
     pos=${ROW#*[}
     #echo $pos
-
+   
     data_io=$((${data_rate_output#-}))
     if [ $data_io -ge $((1024*1024)) ]; then relh_pos=10; elif [ $data_io -ge $((1024)) ]; then relh_pos=5; elif [ $data_io -ge $((512)) ]; then relh_pos=3; else relh_pos=$((data_io/255));  fi
     #echo -e -n "  io $data_rate_output  relh $relh_pos "
@@ -131,6 +145,7 @@ while true; do
   if [ "$paused" = false ]; then
        if [ "$err" = false ]; then
          calculate_data_rate #comment with difficulties with (hard)links, permissions, 'No such file or directory',
+         graphical_output
        fi
        monitor_io
   fi
@@ -160,4 +175,3 @@ while true; do
     echo ""
   fi
 done
-
