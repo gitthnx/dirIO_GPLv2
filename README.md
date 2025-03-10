@@ -65,5 +65,7 @@
 <br><br>
 
 ### credits
-  inotify   [inotify-tools](https://github.com/inotify-tools/inotify-tools)  
+  inotify   
+  [inotify-tools](https://github.com/inotify-tools/inotify-tools)
+  [inotify-info](https://github.com/mikesart/inotify-info)
 
