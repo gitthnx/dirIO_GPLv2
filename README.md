@@ -13,7 +13,7 @@
     ./dirIO.sh --help 
 <br> 
 
-       Usage: ./dirIO__du.sh  /directory/to/monitor
+       Usage: ./dirIO.sh  /directory/to/monitor
                                              
               keys: on 'statx' errors == 'n'        
                     pause             == 'p'        
