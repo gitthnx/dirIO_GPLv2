@@ -1,0 +1,39 @@
+"Create a Bash script that monitors directory I/O activity in real-time. The script should:
+
+    Monitor Directory Changes: Use inotifywait to track file/directory creation, modification, movement, and deletion events within a specified directory. Log these events to a temporary file (/dev/shm/inotify.lg).
+
+    Calculate Data Rates: Continuously calculate and display the input/output data rates (in bytes, kB, and MB) for the monitored directory. Include cumulative sums for input and output data.
+
+    Graphical Representation: Provide a graphical representation of the I/O activity using ASCII art, showing data rates over time.
+
+    Interactive Controls: Allow the user to interact with the script using the following keys:
+
+        p: Pause monitoring.
+
+        r or spacebar: Resume monitoring.
+
+        m: Cycle through different display modes (e.g., detailed, summary, graphical).
+
+        n: Adjust the depth of directory tree monitoring (e.g., base directory, 1 level deep, all levels).
+
+        c: Clear the screen.
+
+        h or ?: Display a help menu with key bindings and usage instructions.
+
+        q: Quit the script gracefully.
+
+    Error Handling: Ensure the script handles invalid directory paths, missing inotify-tools, and other potential errors gracefully.
+
+    Performance Optimization: Optimize the script for performance, especially when monitoring large directories or high I/O activity.
+
+    Additional Features:
+
+        Display the script version, start time, and directory size at the beginning.
+
+        Ignore Ctrl+C interrupts to prevent accidental termination.
+
+        Use tput for cursor positioning and screen manipulation.
+
+        Include a function to calculate and display the time between I/O events.
+
+Provide clear comments and structure the script for readability and maintainability."
