@@ -1,0 +1,168 @@
+#!/bin/bash
+
+# Script: dir_monitor.sh
+# Description: Monitors directory I/O activity in real-time.
+# Version: 0.1.0
+# Date: October 2023
+
+# Trap to ignore Ctrl+C
+trap '' INT
+
+# Function to handle SIGTERM
+sigterm_handler() {
+  echo -e "\nMonitoring stopped. Exiting gracefully..."
+  kill -SIGTERM $inotify_pid 2>/dev/null
+  exit 0
+}
+
+# Register SIGTERM handler
+trap sigterm_handler SIGTERM
+
+# Check if inotify-tools is installed
+if ! command -v inotifywait &>/dev/null; then
+  echo "Error: inotify-tools is not installed. Please install it and try again."
+  exit 1
+fi
+
+# Validate directory argument
+if [ $# -ne 1 ] || [ ! -d "$1" ]; then
+  echo "Usage: $0 /path/to/directory"
+  exit 1
+fi
+
+# Initialize variables
+directory="$1"
+inotify_log="/dev/shm/inotify.lg"
+inotify_pid=""
+start_time=$(date +%s)
+start_dir_size=$(du -sb "$directory" | awk '{print $1}')
+current_dir_size="$start_dir_size"
+total_input=0
+total_output=0
+paused=false
+mode=1
+depth=10
+key=""
+
+# Function to display help
+show_help() {
+  echo -e "\nKeys:"
+  echo "  p: Pause monitoring"
+  echo "  r or spacebar: Resume monitoring"
+  echo "  m: Cycle display modes (detailed, summary, graphical)"
+  echo "  n: Adjust directory tree depth (base, 1 level, all levels)"
+  echo "  c: Clear screen"
+  echo "  h or ?: Show this help menu"
+  echo "  q: Quit the script"
+  echo -e "\nVersion: 0.1.0"
+}
+
+# Function to calculate data rates
+calculate_rates() {
+  local new_size=$(du -sb "$directory" | awk '{print $1}')
+  local diff=$((new_size - current_dir_size))
+  current_dir_size="$new_size"
+
+  if [ "$diff" -gt 0 ]; then
+    total_input=$((total_input + diff))
+  elif [ "$diff" -lt 0 ]; then
+    total_output=$((total_output - diff))
+  fi
+
+  echo "$diff"
+}
+
+# Function to format bytes
+format_bytes() {
+  local bytes="$1"
+  if [ "$bytes" -ge 1048576 ]; then
+    echo "$((bytes / 1048576)) MB"
+  elif [ "$bytes" -ge 1024 ]; then
+    echo "$((bytes / 1024)) kB"
+  else
+    echo "$bytes B"
+  fi
+}
+
+# Function to display graphical I/O activity
+graphical_output() {
+  local rate="$1"
+  local abs_rate=${rate#-}
+  local bar_length=$((abs_rate / 1024)) # Scale for visualization
+  if [ "$bar_length" -gt 50 ]; then
+    bar_length=50
+  fi
+
+  if [ "$rate" -gt 0 ]; then
+    echo -n "[INPUT ] "
+    printf "%${bar_length}s" | tr ' ' '='
+  else
+    echo -n "[OUTPUT] "
+    printf "%${bar_length}s" | tr ' ' '-'
+  fi
+  echo ""
+}
+
+# Start inotifywait in the background
+inotifywait -e create,modify,move,delete -r -m --timefmt "%Y-%m-%d %H:%M:%S" \
+  --format "[%T] %w%f %e" "$directory" > "$inotify_log" 2>/dev/null &
+inotify_pid=$!
+
+# Main loop
+clear
+echo "Directory I/O Monitor"
+echo "====================="
+echo "Directory: $directory"
+echo "Start Time: $(date -d @"$start_time" "+%Y-%m-%d %H:%M:%S")"
+echo "Initial Size: $(format_bytes "$start_dir_size")"
+echo -e "\nPress 'h' for help."
+
+while true; do
+  if [ "$paused" = false ]; then
+    # Calculate and display data rates
+    rate=$(calculate_rates)
+    clear
+    echo "Directory I/O Monitor"
+    echo "====================="
+    echo "Directory: $directory"
+    echo "Start Time: $(date -d @"$start_time" "+%Y-%m-%d %H:%M:%S")"
+    echo "Current Size: $(format_bytes "$current_dir_size")"
+    echo "Total Input: $(format_bytes "$total_input")"
+    echo "Total Output: $(format_bytes "$total_output")"
+    echo -e "\nI/O Rate: $(format_bytes "$rate")/s"
+
+    # Graphical representation in mode 2
+    if [ "$mode" -eq 2 ]; then
+      echo -e "\nI/O Activity:"
+      graphical_output "$rate"
+    fi
+  fi
+
+  # Read user input
+  read -r -s -t 1 -N 1 key
+  case "$key" in
+    p)
+      paused=true
+      echo -e "\nMonitoring paused. Press 'r' or spacebar to resume."
+      ;;
+    r|" ")
+      paused=false
+      ;;
+    m)
+      mode=$((mode % 3 + 1))
+      ;;
+    n)
+      depth=$((depth % 10 + 1))
+      echo -e "\nMonitoring depth set to $depth level(s)."
+      ;;
+    c)
+      clear
+      ;;
+    h|"?")
+      show_help
+      ;;
+    q)
+      sigterm_handler
+      ;;
+  esac
+done
