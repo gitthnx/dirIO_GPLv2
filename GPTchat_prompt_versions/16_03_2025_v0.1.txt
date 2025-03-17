@@ -1,0 +1,32 @@
+Create a bash script that monitors the input/output data rates and tracks the directory size of a given directory in real-time. The script should support various functionalities such as pausing and resuming output, changing the mode of output (e.g., graphical mode, data rate mode), and handling multiple key inputs to control the behavior. The script should also display graphical and textual representations of data input/output activities and show updates on the terminal. Ensure the script includes functionality to handle traps, directory validation, and error handling. The script should include the following sections:
+
+1. **Initial setup**:  
+   - Validate if the provided directory path is valid and exists.  
+   - Display help or usage instructions if required.
+   
+2. **Directory size tracking**:  
+   - Track the directory size using both find and du commands.  
+   - Show real-time directory size updates.
+
+3. **Key actions**:  
+   - Allow control over the monitoring with key presses (e.g., pause, resume, quit, output mode, level of monitoring).
+   - Use a trap to ignore Ctrl+C interruption and handle termination gracefully.
+   
+4. **I/O monitoring**:  
+   - Monitor file and directory changes using inotifywait.  
+   - Show input/output activity in real time, including data rates and graphical representation.
+
+5. **Graphical output**:  
+   - Create a graphical output to show the data transfer rate in a bar-like visual representation.
+   
+6. **Data rate calculations**:  
+   - Calculate and display data rates (input/output) in bytes per second, kilobytes per second, and megabytes per second.
+   
+7. **Error handling**:  
+   - Handle errors related to non-existent directories, permissions, or invalid arguments.
+   
+8. **Help and usage instructions**:  
+   - Provide a help section with detailed key instructions and version information when requested.
+   
+Include all the necessary functions to handle real-time monitoring, displaying output, handling keyboard inputs, and terminating the script correctly. 
+Provide a Linux top-like design layout. 
