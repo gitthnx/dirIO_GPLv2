@@ -210,7 +210,8 @@ graphical_output() {
     pos=$((gpos+cntr1))
 
     data_io=$((${data_rate_output#-}))
-    relh_pos=$([ "$data_io" -ge $((10*1024*1024*1024)) ] && echo 19 || [ "$data_io" -ge $((1024*1024*1024)) ] && echo 16 || [ "$data_io" -ge $((512*1024*1024)) ] && echo 9 || [ "$data_io" -ge $((128*1024*1024)) ] && echo 7 || [ "$data_io" -ge $((1024*1024)) ] && echo 5 || [ "$data_io" -ge $((512*1024)) ] && echo 4 || [ "$data_io" -ge $((64*1024)) ] && echo 3 || echo $((data_io/(22*1024))))
+    if [ ${data_rate_output#-} -ge $((10*1024*1024*1024)) ]; then relh_pos=19; elif [ $data_io -ge $((1024*1024*1024)) ]; then relh_pos=16; elif [ $data_io -ge $((1024*1024*1024)) ]; then relh_pos=11; elif [ $data_io -ge $((512*1024*1024)) ]; then relh_pos=9; elif [ $data_io -ge $((128*1024*1024)) ]; then relh_pos=7; elif [ $data_io -ge $((1024*1024)) ]; then relh_pos=5; elif [ $data_io -ge $((512*1024)) ]; then relh_pos=4; elif [ $data_io -ge $((64*1024)) ]; then relh_pos=3; else relh_pos=$((data_io/(22*1024)));  fi   #relh_pos=$((data_io/255));
+    #relh_pos=$([ "$data_io" -ge $((10*1024*1024*1024)) ] && echo 19 || [ "$data_io" -ge $((1024*1024*1024)) ] && echo 16 || [ "$data_io" -ge $((512*1024*1024)) ] && echo 9 || [ "$data_io" -ge $((128*1024*1024)) ] && echo 7 || [ "$data_io" -ge $((1024*1024)) ] && echo 5 || [ "$data_io" -ge $((512*1024)) ] && echo 4 || [ "$data_io" -ge $((64*1024)) ] && echo 3 || echo $((data_io/(22*1024))))
 
     date_=$([ "$rnd_" -eq "1" ] && date "+%H:%M:%S.%3N" || date "+%H:%M:%S.%2N")
     tput cup "$pos" 5
