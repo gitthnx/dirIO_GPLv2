@@ -1,0 +1,369 @@
+
+Please create a prompt that creates following bash script: 
+"#!/bin/bash
+
+#trap '' INT #ignores <ctrl><c>
+sigterm_handler() {
+  signl="$1" ; shift
+  for sig ; do
+    trap "$signl $sig" "$sig"
+  done
+}
+sigterm_msg() {
+  posYX 50 0 0
+  echo -e "$1 received, press 'q' or 'Q' for to exit dirIO script \033[0K"
+}
+
+
+# Check if directory is provided
+clear
+avail=$( [ ! -d $1 ] || [ -z "$1" ] && echo "0" || echo "1" )
+if [ "$1" == "/" ]; then avail=0; echo; echo "*** no root fs io monitoring recommended ***"; fi
+if [ "$#" -eq "0" ] || [ "$#" -gt "1" ]; then
+  echo " \$# $#   \$1 $1  directory path available $avail"
+  echo "Usage: $0 '-h' | '--help' | '-?' | '/?'"
+  key="q"
+fi
+
+keysdef=\
+"                                             \033[0K\n"\
+"       keys: search tree level == 'n'        \033[0K\n"\
+"             output mode       == 'm'        \033[0K\n"\
+"             pause             == 'p'        \033[0K\n"\
+"             resume            == ' ' or 'r' \033[0K\n"\
+"             clear screen      == 'c' or 'C' \033[0K\n"\
+"             help              == 'h' or 'H' or '?'  \033[0K\n"\
+"             quit              == 'q' or 'Q' \033[0K\n"\
+"                                             \033[0K\n"\
+"       version 0.1.6                          \033[0K\n"\
+"       March 15, 2025                        \033[0K\n"\
+"                                             \033[0K"
+if [ -z "$1" ] || [ ! "$avail" == 1 ] || [ "$#" -ne 1 ]; then
+  echo "Usage: $0  /directory/to/monitor"
+  if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "-?" ] || [ "$1" == "/?" ]; then
+    echo -e -n "$keysdef"
+  fi
+  echo
+  exit 1
+fi
+
+
+# Initialize variables
+directory="$1"
+inotfy_pth="/dev/shm/inotify.lg"
+pid_="$$"
+total_input=0
+total_output=0
+sum_in=0
+sum_out=0
+#start_time=$(date +%s%N)
+start_time=$(date +%s)
+timeNext=0
+timePrev=$(date +%s.%2N)
+paused=false
+mode=1
+n_=10
+n2_=0
+cntr1=1
+cntr2=1
+winh_=1
+rnd_=0
+dir_size_=($(seq 0 10 1))
+
+dir_size=$(find "$directory" -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+dir_size_du=$(du -sb "$directory" | awk '{print $1}')
+start_dir_size=$((dir_size_du))
+current_dir_size=$((dir_size))
+
+
+
+### set cursor position
+posYX() {
+  ROW=$1
+  tput cup ${ROW#*[} $2
+#  echo -e "var1_Y $1 var2_X $2 \n"
+  if [ "$3" -ne "1" ]; then echo -e "\e[?25l"; else echo -e "\e[?25h"; fi
+}
+
+### function to monitor data I/O and data rates
+monitor_io() {
+  local rate_in=0
+  local rate_out=0
+
+  
+  #if [ $(stat --printf=\"%s\" $inotfy_pth) -gt "0" ]; then posYX 55 0 0; cat $inotfy_pth | tail -n 5; echo -e "" > $inotfy_pth; else posYX 55 0 0; echo -e "no io"; fi
+  if [ $(du $inotfy_pth | cut -f 1) -gt "0" ] || [ "$n_" -ne "$n2_" ]; then
+    posYX 48 0 0
+    cat $inotfy_pth | tail -n 15 > /dev/shm/inotify_part.lg
+    cp /dev/shm/inotify_part.lg $inotfy_pth
+    #echo -e "" > $inotfy_pth
+    cntr2=1
+    if [ "$winh_" -gt "50" ] && [ "$mode" -gt "0" ]; then
+      while IFS= read -r line || [[ -n "$line" ]]; do
+      #  echo "Text read from file: $line"
+        len_=$(echo $line | wc -c)
+        echo -e "\033[1K\t"echo $line | tail -c 127" \033[0K"
+        cntr2=$((cntr2+1))
+      #done < "$1"
+      done < "/dev/shm/inotify_part.lg"
+      #rm -rf /dev/shm/inotfy_part.lg
+      #echo -e "" > $inotfy_pth
+      #for i in $(seq $((47+cntr2)) 62); do posYX $i 0 0; printf "\033[2K"; done
+      for i in $(seq 1 3); do printf "\033[2K"; done
+
+    #else
+    #  for i in $(seq 47 62); do posYX $i 0 0; printf "\033[2K"; done
+    fi
+
+    # Get current I/O stats
+    if [ "$n_" -eq "10" ]; then
+      #current_io=$(du -sb "$directory" | awk '{print $1}')
+      current_dir_size=$(find "$directory" -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+    else
+      #current_io=$(du -d 1 -sb "$directory" | awk '{print $1}')
+      posYX 65 0 0
+      echo " "$n_" "$n2_"   "
+      current_dir_size=$(find "$directory" -mindepth 1 -maxdepth $((n_+1)) -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+      sleep 0.01
+    fi
+    posYX 1 0 0
+    dir_size_[$n_]=$current_dir_size
+    dir_size_du=$((current_dir_size))
+    for i in $(seq 0 10); do echo -e -n $i" "${dir_size_[$i]} "\033[0K"; done
+    echo -e -n "\n"
+    echo -e "${dir_size_[@]}"
+    #for i in $(seq 1 10); do echo -e "${dir_size_[@]}"; done
+    n2_=$((n_))
+  else
+    posYX 65 0 0
+    echo -e "no io"
+  fi
+
+
+
+    # Calculate data rates
+    # 1s timeout on read cmd
+#    rate_io=$((current_io - dir_size_du))
+    rate_io=$((current_dir_size - dir_size_du))
+    if [ $((rate_io)) -gt 0 ]; then
+      rate_in=$(( rate_in+rate_io ))
+      sum_in=$(( sum_in+rate_in ))
+    elif [ $((rate_io)) -lt 0 ]; then
+      rate_out=$(( rate_out+rate_io ))
+      sum_out=$(( sum_out+rate_out ))
+    fi
+    if [ $((rate_io)) -ne 0 ]; then
+    # time delay between IO activity
+      timeNext="$(date +%s.%2N)"
+      #timeBtwIO=$((timeNext-timePrev))
+      timeBtwIO=$(echo "$timeNext-$timePrev" | bc)
+      timePrev=$timeNext
+    fi
+
+    # Update variable with current values
+#    dir_size_du=$((current_io))
+    dir_size_du=$((current_dir_size))
+
+    # Display data rates
+    if [ "$sum_in" -ge "$((1024*1024))" ]; then
+      sum_in_="$((sum_in/(1024*1024)))MB"
+    elif [ "$sum_in" -ge "$((1024))" ]; then
+      sum_in_="$((sum_in/1024))kB"
+    else
+      sum_in_="$sum_in B"
+    fi
+    if [ "$mode" -gt "2" ]; then
+      posYX 40 0 0
+      echo -e  "  Data Input Rate:  $rate_in  bytes/sec $((rate_in/1024)) kB/s  $((rate_in/(1024*1024))) MB/s \033[0K"
+      echo -e  "  Data Output Rate: $rate_out bytes/sec  $((rate_out/1024)) kB/s  $((rate_out/(1024*1024))) MB/s \033[0K"
+      echo -e  "  Data Input Sum: $sum_in_  $((sum_in/(1024*1024))) MB \033[0K"
+      echo -e  "  Data Output Sum: $sum_out  bytes $((sum_out/1024)) kB  $((sum_out/(1024*1024))) MB \033[0K"
+    else
+      for i in $(seq 40 43); do posYX $i 0 0; printf "\033[2K"; done
+    fi
+
+    winsize_=$(xwininfo -id $(xdotool getactivewindow) | awk -F ':' '/Width/ || /Height/{print $2}' | tr '\n' ' ' )
+    winname_=$(xwininfo -id $(xdotool getactivewindow) -all | awk -F ':'      '/xwininfo/ {print  $3 $4}')
+    winh=$(xwininfo -id $(xdotool getactivewindow) | awk -F ':' '/Height/{print $2}' | tr '\n' ' ' )
+    winh_=$(( (winh-400)*100/winh ))
+    echo -e "  winsize $winsize_  $winh_  "$winname_" \033[0K"
+
+
+}
+
+# Function to calculate data rate output
+calculate_data_rate() {
+    posYX 7 0 0
+    printf '\e[132;7;3m'
+    echo -e "$start_date   start_dir_size $((start_dir_size/1024)) kB  current_dir_size $((current_dir_size/1024)) kB  io diff $(( ($current_dir_size-$start_dir_size)/(1024*1024) )) MB \033[0K"
+    if [ "$n_" -eq "0" ]; then n__="base dir"; elif [ "$n_" -eq "1" ]; then n__="1 dir level"; elif [ "$n_" -eq "10" ]; then n__="all dir levels"; else n__="$n_ dir levels"; fi
+    echo -e "pid_$pid_ err_$err m_$mode n_$n_ for ($n__ of) $directory \033[0K"
+    printf '\e[0m';
+
+    now_=$(date +%s) #%s%N
+    uptime_=$((now_-start_time))
+
+    data_rate_output=$((current_dir_size - dir_size))
+    echo -e "  data_rate_io $data_rate_output B/s \033[0K"
+    dir_size=$((current_dir_size))
+    if [ $((data_rate_output)) -le 0 ]; then
+      input_sum=$(( input_sum+data_rate_output ))
+      in_sum_float=echo "scale=3; $((input_sum))/(1024*1024)" | bc
+    else
+      output_sum=$(( output_sum+data_rate_output ))
+      out_sum_float=echo "scale=3; $((output_sum))/(1024*1024)" | bc
+    fi
+
+    echo -e "  Data rate io: $data_rate_output bytes/s  echo  \"scale=4; $data_rate_output/1024/1024\" | bc MB/s \033[0K"
+
+    echo -e "  data io sum: $((input_sum))  $((output_sum)) bytes \033[0K"
+    echo -e -n "  data io sum: $in_sum_float   $out_sum_float MB ";
+    #printf "%s.%s " "${uptime_:0: -9}" "${uptime_: -9:3}"
+    echo -e " ($uptime_""s) \033[0K"
+    printf "\033[2K"
+
+
+    # get current cursor pos
+    IFS=';' read -sdR -p $'\E[6n' ROW COL
+    #echo -e -n " ${ROW#*[}"
+    pos=${ROW#*[}
+    #echo $pos
+}
+
+# Function for graphical representation of data IO
+graphical_output() {
+
+    posYX 12 0 0
+    # get current cursor pos
+    IFS=';' read -sdR -p $'\E[6n' ROW COL
+    #echo -e -n " ${ROW#*[}"
+    gpos=${ROW#*[}
+    pos=$((gpos+cntr1))
+
+    #echo $pos
+
+    data_io=$((${data_rate_output#-}))
+    if [ ${data_rate_output#-} -ge $((10*1024*1024*1024)) ]; then relh_pos=19; elif [ $data_io -ge $((1024*1024*1024)) ]; then relh_pos=16; elif [ $data_io -ge $((1024*1024*1024)) ]; then relh_pos=11; elif [ $data_io -ge $((512*1024*1024)) ]; then relh_pos=9; elif [ $data_io -ge $((128*1024*1024)) ]; then relh_pos=7; elif [ $data_io -ge $((1024*1024)) ]; then relh_pos=5; elif [ $data_io -ge $((512*1024)) ]; then relh_pos=4; elif [ $data_io -ge $((64*1024)) ]; then relh_pos=3; else relh_pos=$((data_io/(22*1024)));  fi   #relh_pos=$((data_io/255));
+    
+    if [ "$rnd_" -eq "1" ]; then date_=$(date "+%H:%M:%S.%3N"); else date_=$(date "+%H:%M:%S.%2N"); fi
+    tput cup  $pos 5
+    ioMBps="echo  \"scale=4; $data_rate_output/1024/1024\" | bc MB/s"
+    if [ "$data_io" -ne "0" ]; then echo -e "\033[1K$date_ $data_rate_output bytes/s $timeBtwIO"s" \033[0K"; else echo -e "   \033[1K$date_ \033[0K"; fi
+    if [ $data_rate_output -lt 0 ]; then tput cup  $pos 53; echo -e -n "$ioMBps"; elif [ $data_rate_output -gt 0 ]; then tput cup  $pos 112; echo -e -n "$ioMBps"; fi
+
+    tput cup  $pos 70
+    echo -e -n "|"
+    if [ $data_rate_output -le 0 ]; then tput cup $pos $((90-relh_pos)); else tput cup $pos $((90)); fi
+    for i in $(seq 1 ${relh_pos#-} ); do printf "~"; done
+    tput cup  $pos 90
+    echo -e -n "|"
+    tput cup $pos 110
+    echo -e -n "|\n"
+
+
+
+#    echo -e "cntr1 $cntr1 pos $pos"
+    cntr1=$((cntr1+1))
+    if [ "$cntr1" -gt "23" ]; then cntr1=1; rnd_=$((1-rnd_)); fi   #rnd_=$((1-rnd_)) or rnd_=$((!rnd_))
+
+}
+
+
+
+
+
+
+start_date=$(date)
+posYX 3 0 0
+echo "monitoring start: $start_date"
+echo "directory size (find -type cmd) $((dir_size/1024)) kB, directory size (du cmd) $((dir_size_du/1024)) kB"
+echo
+sleep 0.01
+
+#if inotify-tools available?
+/dev/shm/inotify-tools_server/build/src/inotifywait -e create,modify,move,delete -r -m --timefmt "%m/%d/%Y %H:%M:%S"  --format "[%T] %w,%f,%e,%x" -o $inotfy_pth --exclude /dev/shm/inotify.lg $directory &
+
+pid2_=$!
+echo "pid of inotifywait&: $!" > /dev/shm/inotify_.msg
+
+posYX 1 0 0
+
+
+
+# Main loop
+while true; do
+  if [ "$paused" = false ]; then
+    #clear
+    calculate_data_rate #comment with difficulties with (hard)links, permissions, 'No such file or directory',
+    if [ "$mode" -gt "0" ]; then
+      graphical_output
+    fi
+    monitor_io
+  fi
+  
+# read -s -t 0.1 -n 1 key
+  read -r -s -t 0.1 -N 1 key
+  posYX 45 0 0
+  if [ "$key" = "q" ] || [ "$key" = "Q" ]; then
+    posYX 47 0 0
+    echo "monitoring stop:  $(date)"
+    echo -e -n "  key(s) pressed: '$key'"
+    echo
+    kill -SIGTERM $pid2_
+    ps aux | grep inotify
+    sleep 0.01
+    #clear
+    posYX 0 0 1
+    break
+    exit 1
+  elif [ "$key" = "p" ]; then
+    paused=true
+    echo "Output paused. Press space or key 'r' to resume."
+  elif [ "$key" = $'\x0a' ] || [ "$key" = $'\x20' ] || [ "$key" = " " ] || [ "$key" = "r" ]; then
+    mode=$((mode_))
+    paused=false
+    posYX 47 0 0
+    echo -e "Output resumed. \033[0K"
+    for i in $(seq 45 55); do posYX $i 0 0; printf "\033[2K"; done
+  elif [ "$key" = "m" ]; then
+    mode=$((mode+1))
+    if [ "$mode" -gt "3" ]; then mode=0; fi
+  elif [ "$key" = "n" ]; then
+    n_=$((n_+1))
+    #if [ "$n_" -eq "10" ] && [ "$err" == "false" ]; then
+    #  err="true"
+    #elif [ "$n_" -eq "10" ] && [ "$err" == "true" ]; then
+    #  err="false"
+    #fi
+    if [ "$n_" -gt "10" ]; then n_=0; fi
+    # Get current I/O stats
+    if [ "$n_" -eq "10" ]; then
+      #current_io=$(du -sb "$directory" | awk '{print $1}')
+      current_dir_size=$(find "$directory" -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+    else
+      #current_io=$(du -d 1 -sb "$directory" | awk '{print $1}')
+      posYX 65 0 0
+      echo " "$n_" "$n2_"   "
+      current_dir_size=$(find "$directory" -mindepth 1 -maxdepth $((n_+1)) -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}')
+      sleep 0.01
+    fi
+    dir_size=$((current_dir_size))
+  elif [ "$key" = "c" ] || [ "$key" = "C" ]; then
+    clear
+  elif [ "$key" = "h" ] || [ "$key" = "H" ] || [ "$key" = '?' ] ; then
+    mode_=$((mode))
+    mode=0
+    posYX 47 0 0
+    echo -e -n "\033[1K$keysdef\033[0K"
+    for i in $(seq 1 10); do printf "\033[2K"; done
+  fi
+  if [ ! "$key" == "" ]; then
+    posYX 46 0 0
+    echo -e -n "  key(s) pressed: '$key' \033[0K"
+    printf %d\\n \'$key
+    #for i in $(seq 47 62); do posYX $i 0 0; printf "\033[2K"; done
+    #echo -e " \033[2K"
+  fi
+
+done
+"
