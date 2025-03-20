@@ -240,7 +240,7 @@ echo
 sleep 0.01
 
 # Start inotifywait background process
-/dev/shm/inotify-tools_server/build/src/inotifywait -e create,modify,move,delete -r -m --timefmt "%m/%d/%Y %H:%M:%S" --format "[%T] %w,%f,%e,%x" -o "$inotfy_pth" --exclude /dev/shm/inotify.lg "$directory" &
+/dev/shm/inotifywait -e create,modify,move,delete -r -m --timefmt "%m/%d/%Y %H:%M:%S" --format "[%T] %w,%f,%e,%x" -o "$inotfy_pth" --exclude /dev/shm/inotify.lg "$directory" &
 pid2_=$!
 echo "pid of inotifywait&: $!" > /dev/shm/inotify_.msg
 
