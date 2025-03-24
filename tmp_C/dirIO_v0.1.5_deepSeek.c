@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    setup_signals();
+    //setup_signals();
     atexit(cleanup);
     init_ncurses();
     
