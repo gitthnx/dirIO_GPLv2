@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: build dirIO, C/C++ CI
 
 on:
   push:
