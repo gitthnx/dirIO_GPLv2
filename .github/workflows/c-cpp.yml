@@ -131,7 +131,9 @@ jobs:
         run: mkdir artifacts 
       - name: touch file "test" within artifacts folder
         run: touch artifacts/test
-        
+      - name: ls to system
+        run: ls -al ./* 
+    
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
@@ -148,7 +150,7 @@ jobs:
           --recursive \
           --acl public-read \
           --region ap-southeast-2 \
-          ./build s3://example
+          ./tmp_C s3://example
 
       - name: ls to system
         run: ls -al ./* 
