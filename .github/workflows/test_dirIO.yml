@@ -1,0 +1,18 @@
+name: test dirIO /dev/shm
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  Run-dirIO-on-Ubuntu:
+    name: run dirIO on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+      - run: tmp_C/dirIO_v0.1.5_deepSeek /dev/shm
+      
