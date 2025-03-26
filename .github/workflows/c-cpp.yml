@@ -119,14 +119,14 @@ jobs:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-latest
     steps:
-      #- uses: actions/checkout@master
+     # - uses: actions/checkout@master
       - uses: actions/checkout@v4
       - name: ls to tmp_C
-      run: ls -al tmp_C
+        run: ls -al tmp_C
       - name: makefile on repository folder tmp_C
-      run: make -j12 all
+        run: make -j12 all
       - name: ls to system
-      run: ls -al ./* 
+        run: ls -al ./* 
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
