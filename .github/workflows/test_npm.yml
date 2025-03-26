@@ -1,4 +1,4 @@
-name: Run commands on different operating systems
+name: test_npm
 on:
   push:
     branches: [ main ]
