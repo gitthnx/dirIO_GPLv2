@@ -1,6 +1,7 @@
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -std=c11
+LIBS   = -lncurses	
 TARGET = tmp_C/dirIO_v0.1.5_deepSeek
 
 # Source files
