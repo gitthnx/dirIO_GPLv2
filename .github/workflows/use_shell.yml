@@ -7,5 +7,6 @@ on:
  push:
 jobs: 
   job1:
-    echo -e "hello World"
+    - run:
+      echo -e "hello World"
 
