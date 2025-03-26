@@ -1,0 +1,7 @@
+Okay, I've got that. Here's the Bash script based on your detailed request. It's designed to monitor I/O activity in a directory, and it includes all the features you specified.
+
+Directory I/O Monitor Script
+Mar 26, 8:12 PM
+
+<external editor><open button>
+<26_03_2025_v0.1_gemini2.0_dirIO.sh>
