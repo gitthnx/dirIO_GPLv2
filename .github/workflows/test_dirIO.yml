@@ -33,7 +33,7 @@ jobs:
       #    sudo bash --noprofile --norc -eo pipefail ${{ github.event_name == 'workflow_dispatch' }}
       
       - run:
-          chmod +x /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.2.sh
-      - run:
-          sudo /usr/bin/bash -c "/home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.2.sh /dev/shm"
+          chmod +x /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh
+      #- run:
+      #    sudo /usr/bin/bash -c "/home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh /dev/shm"
       
