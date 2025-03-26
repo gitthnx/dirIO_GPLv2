@@ -1,6 +1,7 @@
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -std=c11
+LIBFLAGS = -lncurses	
 TARGET = tmp_C/dirIO_v0.1.5_deepSeek
 
 # Source files
@@ -12,7 +13,7 @@ all: $(TARGET)
 
 # Build target executable
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBFLAGS)
 
 # Compile source files to object files
 %.o: %.c
