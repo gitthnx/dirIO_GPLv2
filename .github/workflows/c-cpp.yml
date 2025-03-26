@@ -95,6 +95,8 @@ jobs:
       run: ls -al tmp_C
     - name: ls to system
       run: ls -al ./*
+    - name: makefile on repository folder tmp_C
+      run: make -j12 all
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
