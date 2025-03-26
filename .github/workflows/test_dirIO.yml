@@ -17,5 +17,6 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install htop
-      - run: tmp/dirIO_graphical_0.1.5.sh /dev/shm
+      - run: 
+          sudo tmp/dirIO_graphical_0.1.5.sh /dev/shm
       
