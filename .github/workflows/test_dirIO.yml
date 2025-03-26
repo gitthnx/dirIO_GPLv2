@@ -25,9 +25,9 @@ jobs:
           whereis chmod      
       - run:
       #    shell: /usr/bin/bash -ieo pipefail {0}
-          shell:
+      #    shell:
       #        sudo bash --noprofile --norc -eo pipefail {0}
-              sudo bash --noprofile --norc -eo pipefail ${{ github.event_name == 'workflow_dispatch' }}
+      #        sudo bash --noprofile --norc -eo pipefail ${{ github.event_name == 'workflow_dispatch' }}
       #- shell:
       #    sudo bash --noprofile --norc -eo pipefail ${{ github.event_name == 'workflow_dispatch' }}
       - run:
