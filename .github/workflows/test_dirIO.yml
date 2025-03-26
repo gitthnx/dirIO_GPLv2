@@ -14,5 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '14'
-      - run: tmp_C/dirIO_v0.1.5_deepSeek /dev/shm
+      - run: |
+          sudo apt-get update
+          sudo apt-get install htop
+      - run: tmp/dirIO_graphical_0.1.5.sh /dev/shm
       
