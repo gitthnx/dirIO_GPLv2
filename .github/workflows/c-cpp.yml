@@ -127,13 +127,18 @@ jobs:
         run: make -j12 all
       - name: ls to system
         run: ls -al ./* 
+      - name: mkdir artifacts
+        run: mkdir artifacts 
+      - name: touch file "test" within artifacts folder
+        run: touch artifacts/test
+        
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
          # name: build
          name: dirIO_v0.1.5_deepSeek
          # path: build
-         path: tmp_C/dirIO_v0.1.5_deepSeek
+         path: artifacts/dirIO_v0.1.5_deepSeek
       - name: Deploy to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
