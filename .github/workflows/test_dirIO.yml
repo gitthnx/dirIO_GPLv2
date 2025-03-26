@@ -19,7 +19,8 @@ jobs:
       - run:
           sudo apt-get install htop
       - run:
-          ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2
+          ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp
+          whereis bash          
       - run:
-          sudo /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh /dev/shm
+          sudo bash -c "/home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh /dev/shm"
       
