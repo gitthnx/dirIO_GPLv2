@@ -95,8 +95,8 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-       # name: my-artifact-${{ matrix.runs-on }}
-        name: tmp_C/dirIO_v0.1.5_deepSeek
+        name: my-artifact-${{ matrix.runs-on }}
+       # name: tmp_C/dirIO_v0.1.5_deepSeek
        # path: file-${{ matrix.runs-on }}.txt
         path: file-${{ matrix.runs-on }}.txt
 
