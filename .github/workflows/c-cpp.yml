@@ -53,8 +53,8 @@ jobs:
       run: lsblk
     - name: uname to system
       run: uname -a
-    - name: du to system
-      run: time du /
+    #- name: du to system
+    #  run: time du /
     - name: lscpu to system
       run: lscpu
     - name: dmesg to system
