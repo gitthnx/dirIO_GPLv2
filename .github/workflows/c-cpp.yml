@@ -43,7 +43,8 @@ jobs:
     - name: ls to directory tmp_C
       run: ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
     - name: cd into tmp_C
-      run: cd /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
+      #run: cd /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
+      run: cd tmp_C
     - name: ls all content from within tmp_C
       run: ls -al ./*
     - name: df to system
