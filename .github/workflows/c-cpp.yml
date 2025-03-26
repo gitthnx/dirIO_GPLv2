@@ -18,19 +18,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: docker/setup-qemu-action@v3
-        with:
-          image: tonistiigi/binfmt:latest
-          platforms: arm,arm64
-      - run: >
-          docker build .
-          --tag my-builder
-          --platform ${{ matrix.platform }}
-      - run: >
-          docker create
-          --name node-bcryptjs-builder
-          --platform ${{ matrix.platform }}
-          my-builder
-      - run: docker cp "my-builder:/usr/local/opt/myproject/*.tar.gz .
+#        with:
+#          image: tonistiigi/binfmt:latest
+#          platforms: arm,arm64
+#      - run: >
+#          docker build .
+#          --tag my-builder
+#          --platform ${{ matrix.platform }}
+#      - run: >
+#          docker create
+#          --name node-bcryptjs-builder
+#          --platform ${{ matrix.platform }}
+#          my-builder
+#      - run: docker cp "my-builder:/usr/local/opt/myproject/*.tar.gz .
+
 #    - name: configure
 #      run: ./configure
     - name: Output Run ID
