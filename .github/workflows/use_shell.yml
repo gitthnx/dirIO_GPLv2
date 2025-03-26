@@ -1,7 +1,8 @@
 name: use bashrc
 defaults:
   run:
-    shell: bash -ieo pipefail {0}
+#    shell: bash -ieo pipefail {0}
+    shell: sudo bash --noprofile --norc -eo pipefail ${{ github.event_name == 'workflow_dispatch' }}
 on: 
  push:
 jobs: 
