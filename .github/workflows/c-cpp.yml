@@ -51,6 +51,25 @@ jobs:
       run: df -h
     - name: lsblk to system
       run: lsblk
+    - name: uname to system
+      run: uname -a
+    - name: du to system
+      run: time du /
+    - name: lscpu to system
+      run: lscpu
+    - name: dmesg to system
+      run: dmesg -T
+    - name: get os info
+      run: lsb_release -a
+    - name: apt update
+      run: sudo apt-get update
+    - name: apt upgrade
+      run: sudo apt-get upgrade
+    - name: apt install
+      run: apt install inxi
+    - name: inxi to system
+      run: inxi -a -F -m
+      
     - name: makefile on repository folder tmp_C
       run: make -j12 all
 #      run: make -C tmp_C all
