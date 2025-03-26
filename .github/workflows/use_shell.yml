@@ -1,4 +1,4 @@
-name: use bashrc
+name: use bash
 
 #defaults:
 #  run:
@@ -17,4 +17,5 @@ jobs:
       - name: echo hello World
         run:
           echo "hello World"  
-        shell: pwsh
+        shell: bash
+       # shell: pwsh
