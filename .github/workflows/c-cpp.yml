@@ -61,14 +61,14 @@ jobs:
       run: sudo dmesg -T
     - name: get os info
       run: lsb_release -a
-    - name: apt update
-      run: sudo apt-get update
-    - name: apt upgrade
-      run: sudo apt-get upgrade
-    - name: apt install
-      run: sudo apt install -y inxi
-    - name: inxi to system
-      run: inxi -a -F -m
+   # - name: apt update
+   #   run: sudo apt-get update
+   # - name: apt upgrade
+   #   run: sudo apt-get upgrade
+   # - name: apt install
+   #   run: sudo apt install -y inxi
+   # - name: inxi to system
+   #   run: inxi -a -F -m
       
     - name: makefile on repository folder tmp_C
       run: make -j12 all
@@ -77,6 +77,14 @@ jobs:
 #      run: make check
 #    - name: make distcheck
 #      run: make distcheck
+    - name: cp tmp_C/dirIO_v0.1.5_deepSeek
+      run: cp tmp_C/dirIO_v0.1.5_deepSeek tmp_C/dirIO_workflowActionBuilt_v0.1.5_deepSeek_2025
+    - name: ls tmp_C
+      run: ls -al tmp_C/*
+    - name: ls tmp_C
+      run: ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
+
+
 
   deploy:
     name: Deploy
@@ -88,8 +96,10 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
-          name: build
-          path: build
+         # name: build
+         name: tmp_C/dirIO_v0.1.5_deepSeek
+         # path: build
+         path: tmp_C/dirIO_v0.1.5_deepSeek
       - name: Deploy to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
