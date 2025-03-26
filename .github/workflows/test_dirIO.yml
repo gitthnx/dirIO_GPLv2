@@ -11,11 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '14'
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: '14'
       - run: |
           sudo apt-get update
+      - run:
           sudo apt-get install htop
       - run: 
           sudo tmp/dirIO_graphical_0.1.5.sh /dev/shm
