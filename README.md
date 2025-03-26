@@ -39,11 +39,14 @@
 
 <pre><!-- --><img src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png" width="500" style="margin:30px" style="padding:30px;" ></pre>
 
+*2) experimental implementation into C source code in \<tmp_C\> directory  
+    partly done by LLM_chat automated source code conversion from shell to C source code*
+
 <!-- div id="div1" name="div1" style="position:relative; top:10; left:50;" position="absolute" top="0" left="50" ><img width="500" src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png"></div -->
 
-<!-- *2) <noscript>from \<noscript\> tag: gitREADME.md does not support JavaScript</noscript>* -->
+<!-- *prev2) <noscript>from \<noscript\> tag: gitREADME.md does not support JavaScript</noscript>* -->
 
-<!-- 3) update local repository with changes:
+<!-- prev3) update local repository with changes:
         git config core.fileMode true
         git pull origin main
         alternative procedure:
