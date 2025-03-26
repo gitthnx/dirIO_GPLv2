@@ -41,7 +41,7 @@ jobs:
     - name: Output Run Attempt
       run: echo ${{ github.run_attempt }}
     - name: makefile on repository root directory
-      run: make all
+      run: make -C tmp_C all
 #    - name: make check
 #      run: make check
 #    - name: make distcheck
