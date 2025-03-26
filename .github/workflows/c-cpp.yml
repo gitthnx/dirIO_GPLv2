@@ -149,3 +149,6 @@ jobs:
           --acl public-read \
           --region ap-southeast-2 \
           ./build s3://example
+
+      - name: ls to system
+        run: ls -al ./* 
