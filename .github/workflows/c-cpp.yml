@@ -91,14 +91,14 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
     - name: Create a File
-      run: echo "hello from ${{ matrix.runs-on }}" > tmp_C/file-${{ matrix.runs-on }}.txt
+      run: echo "hello from ${{ matrix.runs-on }}" > file-${{ matrix.runs-on }}.txt
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
        # name: my-artifact-${{ matrix.runs-on }}
         name: tmp_C/dirIO_v0.1.5_deepSeek
        # path: file-${{ matrix.runs-on }}.txt
-        path: tmp_C/file-${{ matrix.runs-on }}.txt
+        path: file-${{ matrix.runs-on }}.txt
 
   deploy:
     name: Deploy
