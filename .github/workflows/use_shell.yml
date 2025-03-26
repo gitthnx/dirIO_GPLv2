@@ -7,7 +7,11 @@ on:
  push:
 jobs: 
   job1:
-    - name: echo hello World
-      run:
-        echo -e "hello World"
-      shell: pwsh
+    name: run dirIO on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: echo hello World
+        run:
+          echo -e "hello World"  
+        shell: pwsh
