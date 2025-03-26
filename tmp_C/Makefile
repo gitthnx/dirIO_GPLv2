@@ -1,10 +1,10 @@
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -std=c11
-TARGET = dirIO_v0.1.5_deepSeek
+TARGET = tmp_C/dirIO_v0.1.5_deepSeek
 
 # Source files
-SRC = dirIO_v0.1.5_deepSeek.c
+SRC = tmp_C/dirIO_v0.1.5_deepSeek.c
 OBJ = $(SRC:.c=.o)
 
 # Default target
