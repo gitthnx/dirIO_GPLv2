@@ -93,10 +93,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: ls to tmp_C
       run: ls -al tmp_C
-    - name: ls to system
-      run: ls -al ./*
     - name: makefile on repository folder tmp_C
       run: make -j12 all
+    - name: ls to system
+      run: ls -al ./*      
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -119,12 +119,19 @@ jobs:
     #runs-on: ubuntu-18.04
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      #- uses: actions/checkout@master
+      - uses: actions/checkout@v4
+      - name: ls to tmp_C
+      run: ls -al tmp_C
+      - name: makefile on repository folder tmp_C
+      run: make -j12 all
+      - name: ls to system
+      run: ls -al ./* 
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
          # name: build
-         name: tmp_C/dirIO_v0.1.5_deepSeek
+         name: dirIO_v0.1.5_deepSeek
          # path: build
          path: tmp_C/dirIO_v0.1.5_deepSeek
       - name: Deploy to S3
