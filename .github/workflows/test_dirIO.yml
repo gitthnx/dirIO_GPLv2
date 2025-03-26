@@ -18,6 +18,8 @@ jobs:
           sudo apt-get update
       - run:
           sudo apt-get install htop
-      - run: 
-          sudo tmp/dirIO_graphical_0.1.5.sh /dev/shm
+      - run:
+          ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2
+      - run:
+          sudo /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh /dev/shm
       
