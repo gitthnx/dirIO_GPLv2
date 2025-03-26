@@ -41,6 +41,11 @@ jobs:
     - name: Output Run Attempt
       run: echo ${{ github.run_attempt }}
     - name: makefile on repository root directory
+      run: ls -al /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
+      run: cd /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp_C
+      run: ls -al ./*
+      run: df -h
+      run: lsblk
       run: make -j12 all
 #      run: make -C tmp_C all
 #    - name: make check
