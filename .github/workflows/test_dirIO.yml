@@ -24,7 +24,9 @@ jobs:
       #   whereis bash
           whereis chmod      
       - run:
-          chmod +x /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh
+          shell: /usr/bin/bash -ieo pipefail {0}
       - run:
-          sudo /usr/bin/bash -c "/home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.5.sh /dev/shm"
+          chmod +x /home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.2.sh
+      - run:
+          sudo /usr/bin/bash -c "/home/runner/work/dirIO_GPLv2/dirIO_GPLv2/tmp/dirIO_graphical_0.1.2.sh /dev/shm"
       
