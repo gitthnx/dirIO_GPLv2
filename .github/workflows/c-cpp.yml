@@ -58,7 +58,7 @@ jobs:
     - name: lscpu to system
       run: lscpu
     - name: dmesg to system
-      run: dmesg -T
+      run: sudo dmesg -T
     - name: get os info
       run: lsb_release -a
     - name: apt update
@@ -66,7 +66,7 @@ jobs:
     - name: apt upgrade
       run: sudo apt-get upgrade
     - name: apt install
-      run: apt install inxi
+      run: sudo apt install -y inxi
     - name: inxi to system
       run: inxi -a -F -m
       
