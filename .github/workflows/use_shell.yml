@@ -16,5 +16,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: echo hello World
         run:
-          echo -e "hello World"  
+          echo "hello World"  
         shell: pwsh
