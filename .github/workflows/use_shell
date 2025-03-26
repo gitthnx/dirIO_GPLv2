@@ -1,0 +1,9 @@
+name: use bashrc
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+on: 
+ push:
+jobs: 
+  job1:
+    echo -e "hello World"
