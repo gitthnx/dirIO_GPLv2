@@ -91,6 +91,16 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v4
+    - name: ls to tmp_C
+      run: ls -al tmp_C
+    - name: ls to system
+      run: ls -al ./*
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dirIO_v0.1.5_deepSeek
+        path: tmp_C/dirIO_v0.1.5_deepSeek
+        
     - name: Create a File
       run: echo "hello from ${{ matrix.runs-on }}" > file-${{ matrix.runs-on }}.txt
     - name: Upload Artifact
