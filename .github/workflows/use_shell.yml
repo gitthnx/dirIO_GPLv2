@@ -7,6 +7,7 @@ on:
  push:
 jobs: 
   job1:
-    - run:
-      echo -e "hello World"
-
+    - name: echo 'hello World'
+      run:
+        echo -e "hello World"
+      shell: pwsh
