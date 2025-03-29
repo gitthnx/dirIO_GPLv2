@@ -15,7 +15,7 @@ OBJ2 = $(SRC2:.c=.o)
 # Default target
 all: $(TARGET)
 
-0.1.5.1: $(TARGET2)
+0.1.5.1: $(TARGET2)  # 'make -j12 0.1.5.1'
 
 $(TARGET2): $(OBJ2)
         $(CC) $(CFLAGS) -o $@ $^ $(LIBFLAGS)
