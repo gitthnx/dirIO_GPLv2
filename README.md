@@ -3,7 +3,7 @@
 
     Linux cmdline script for directory monitoring, e.g. data io (MB/s)
 
-![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_graphical.png)
+![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_graphical_0.1.5.png)
 <!-- p align="left"> https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png -->   
 <br>
 
@@ -15,13 +15,17 @@
 
        Usage: ./dirIO.sh  /directory/to/monitor
                                              
-              keys: on 'statx' errors == 'n'        
-                    pause             == 'p'        
-                    resume            == ' ' or 'r' 
-                    quit              == 'q' or 'Q' 
+             keys: search tree level == 'n'        
+             output mode             == 'm'        
+             pause                   == 'p'        
+             resume                  == ' ' or 'r' 
+             clear screen            == 'c' or 'C' 
+             help                    == 'h' or 'H' or '?'  
+             quit                    == 'q' or 'Q' 
                                              
-              version 0.1                           
-              June 15, 2024                         
+       version 0.1.5                          
+       March 15, 2025                        
+                    
 <br>
 
 
@@ -39,8 +43,8 @@
 
 <pre><!-- --><img src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png" width="500" style="margin:30px" style="padding:30px;" ></pre>
 
-*2) experimental implementation into C source code in \<tmp_C\> directory  
-    partly done by LLM_chat automated source code conversion from shell to C source code*
+<!-- *2) experimental implementation into C source code in \<tmp_C\> directory  
+    partly done by LLM_chat automated source code conversion from shell to C source code* -->
 
 <!-- div id="div1" name="div1" style="position:relative; top:10; left:50;" position="absolute" top="0" left="50" ><img width="500" src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png"></div -->
 
