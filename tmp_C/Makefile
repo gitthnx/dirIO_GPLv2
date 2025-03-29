@@ -3,10 +3,10 @@ CC = gcc
 #CFLAGS = -Wall -Wextra -Werror -std=c11
 CFLAGS = -Wall -Wextra
 LIBFLAGS = -lncurses	
-TARGET = dirIO_v0.1.5_deepSeek
+TARGET = dirIO_v0.1.5_deepSeek dirIO_v0.1.5.1_27032025
 
 # Source files
-SRC = dirIO_v0.1.5_deepSeek.c
+SRC = dirIO_v0.1.5_deepSeek.c dirIO_v0.1.5.1_27032025.c
 OBJ = $(SRC:.c=.o)
 
 # Default target
