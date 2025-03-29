@@ -31,13 +31,16 @@ $(TARGET2): $(OBJ2)
 # Clean build artifacts
 clean:
         rm -f $(OBJ) $(TARGET)
+        rm -f $(OBJ) $(TARGET2)
 
 # Install to /usr/local/bin (requires sudo)
 install: $(TARGET)
         install -m 0755 $(TARGET) /usr/local/bin/$(TARGET)
+        install -m 0755 $(TARGET2) /usr/local/bin/$(TARGET2)
 
 # Uninstall from /usr/local/bin
 uninstall:
         rm -f /usr/local/bin/$(TARGET)
+        rm -f /usr/local/bin/$(TARGET2)
 
 .PHONY: all clean install uninstall
