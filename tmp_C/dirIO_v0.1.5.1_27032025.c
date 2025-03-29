@@ -691,8 +691,9 @@ int main(int argc, char *argv[]) {
 
         //posYX(4, 0, 0);
         posYX(4, 50, 0);
-        printw("start_dir_size: %ldkB %ldMB  current_dir_size %ldkB %ldMB  io_diff %ldkB %.02fMB  ", start_dir_size_[0]/1024, start_dir_size_[0]/(1024*1024), current_dir_size/1024, current_dir_size/(1024*1024), (start_dir_size_[0]-current_dir_size)/1024, (float)(start_dir_size_[0]-current_dir_size)/(1024*1024) );
-        posYX(4, 150, 0);
+        printw("start_dir_size: %ldkB %ldMB  current_dir_size %ldkB %ldMB  io_diff %ldkB %.02fMB ", start_dir_size_[0]/1024, start_dir_size_[0]/(1024*1024), current_dir_size/1024, current_dir_size/(1024*1024), (start_dir_size_[0]-current_dir_size)/1024, (float)(start_dir_size_[0]-current_dir_size)/(1024*1024) );
+        clrtoeol();
+	posYX(4, 150, 0);
         printw("statvfs disk size: %.03fMB  avail: %.06fMB", dirsize2, (float) avail );
         clrtoeol();
         refresh();
