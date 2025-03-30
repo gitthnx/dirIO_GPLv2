@@ -32,7 +32,7 @@ fi
 
 # Help menu definition with ANSI escape codes for formatting
 keysdef="                                             \033[0K\n\
-       keys: search tree level == 'n'        \033[0K\n\
+       keys: search tree level == 'N'up 'n'dn\033[0K\n\
              output mode       == 'm'        \033[0K\n\
              pause             == 'p'        \033[0K\n\
              resume            == ' ' or 'r' \033[0K\n\
@@ -57,7 +57,7 @@ fi
 
 # Variable initialization
 version="v0.1.5.2"
-vdate="March 29, 2025"
+vdate="March 30, 2025"
 directory="$1"
 inotfy_pth="/dev/shm/inotify.lg" # Path for inotify log
 pid_="$$" # Current process ID
@@ -164,6 +164,12 @@ monitor_io() {
         posYX 47 0 0
         cat "$inotfy_pth" | tail -n 15 > /dev/shm/inotify_part.lg
         cp /dev/shm/inotify_part.lg "$inotfy_pth"
+        # limit size of log file to 1MB
+        flsz=$(du -b  /dev/shm/inotify.lg | cut -f 1)
+        if [ "$((flsz))" -gt "$((1*1024))" ]; then
+          cat /dev/shm/inotify.lg | tail -c 1MB > /dev/shm/inotify.lgtmp
+          mv /dev/shm/inotify.lgtmp > /dev/shm/inotify.lg
+        fi
         cntr2=2
         llstr_[0]=0
         llstr_[1]=""
@@ -224,7 +230,7 @@ monitor_io() {
         echo -e "current_dir_size $((dir_size_[0])) $var1 MB "
         tput cup 4 50
         #echo -e "n level: $n_"   "$((dir_size_[$n_])) \033[0K"
-        printf "n: %9.0f %d(%d)" $((dir_size_[$n_])) $n_ $depth_
+        printf "n: %9.0f %d(%d)   " $((dir_size_[$n_])) $n_ $depth_
         tput cup 4 75
         #for i in $(seq 0 $((10)) ); do echo -e -n "${dir_size_[$i]}_($i) \033[0K"; done
         #awk '{printf "0x%x%s0x%x\n", $1, OFS, $2}' OFS='\t' ${dir_size_[@]}
@@ -457,7 +463,7 @@ while true; do
             mode=$((mode+1))
             [ "$mode" -gt "3" ] && mode=0
             ;;
-        "n")
+        "N")
             n_=$((n_+1))
             [ "$n_" -gt "$depth_" ] && n_=0
             if [ "$n_" -eq "$depth_" ]; then
@@ -473,6 +479,10 @@ while true; do
                 sleep 0.01
             fi
             #dir_size=$((current_dir_size))
+            ;;
+        "n")
+            n_=$((n_-1))
+            [ "$n_" -lt "0" ] && n_=$((depth_))
             ;;
         "c"|"C")
             clear
