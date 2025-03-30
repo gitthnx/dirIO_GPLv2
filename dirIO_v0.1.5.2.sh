@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Variable initialization
+version="v0.1.5.2"
+vdate="March 29, 2025"
+
 # Signal handling functions
 sigterm_handler() {
     # Handle signal trapping with dynamic signal assignment
@@ -57,7 +61,7 @@ fi
 
 # Variable initialization
 version="v0.1.5.2"
-vdate="March 30, 2025"
+vdate="March 29, 2025"
 directory="$1"
 inotfy_pth="/dev/shm/inotify.lg" # Path for inotify log
 pid_="$$" # Current process ID
@@ -268,7 +272,6 @@ monitor_io() {
 
 # Data rate calculation function
 calculate_data_rate() {
-    #local rate_in=0 rate_out=0
 
     posYX 7 0 0
     printf '\e[150;7;3m' # Highlighted text
@@ -436,7 +439,7 @@ while true; do
             pos=${ROW#*[}
             for i in $(seq  $((pos-1))  $(tput lines)); do tput cup "$i" 0; printf "\033[2K"; done
 
-            #manually SIGTERM inotifywait?
+            #manually SIGTERM additional inotifywait?
 
             sleep 0.01
             posYX 0 0 1
