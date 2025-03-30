@@ -108,6 +108,7 @@ headln() {
   echo
 }
 
+# find /dev/shm -type f | awk -F/ 'NF > maxdepth { maxdepth = NF; file = $0 }; END {print file}' | sed 's|[^/]||g' | wc -c
 path_depth() { echo "${*#/}" | awk -F/ '{print NF}'; }
 
 update_nlevel_usage() {
@@ -265,7 +266,7 @@ calculate_data_rate() {
 
     posYX 7 0 0
     printf '\e[150;7;3m' # Highlighted text
-    echo -e "$(date)   start_dir_size $((start_dir_size/1024)) kB  current_dir_size $((current_dir_size/1024)) kB  io diff $(( ($current_dir_size-$start_dir_size)/(1024*1024) )) MB \033[0K"
+    echo -e "$(date)   start_dir_size $(echo "scale=6; $start_dir_size/1024/1024" | bc) MB  current_dir_size $(echo "scale=6; $current_dir_size/1024/1024" | bc) MB  io diff $(( ($current_dir_size-$start_dir_size)/(1024*1024) )) MB \033[0K"
     n__=$(([ "$n_" -eq "0" ] && echo -n "base dir level") || ([ "$n_" -eq "1" ] && echo -n "1 dir level") || ([ "$n_" -eq "$depth_" ] && echo -n "all dir levels") || echo -n "$n_ dir levels")
     echo -e "pid_$pid_ err_$err m_$mode n_$n_ for ($n__ of) $directory ($uptime_) \033[0K"
     printf '\e[0m' # Reset formatting
@@ -495,4 +496,3 @@ while true; do
     depth_=$((base_path+full_path-1))
 
 done
-
