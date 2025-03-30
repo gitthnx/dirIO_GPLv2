@@ -15,7 +15,7 @@
 
        Usage: ./dirIO.sh  /directory/to/monitor
                                              
-             keys: search tree level == 'n'        
+       keys: search tree level       == 'n'        
              output mode             == 'm'        
              pause                   == 'p'        
              resume                  == ' ' or 'r' 
@@ -23,8 +23,8 @@
              help                    == 'h' or 'H' or '?'  
              quit                    == 'q' or 'Q' 
                                              
-       version 0.1.5                          
-       March 15, 2025                        
+       version 0.1.5.2                          
+       March 29, 2025                        
                     
 <br>
 
