@@ -7,3 +7,12 @@ v0.1.6.0    improved start-up for analyzing filesystems larger than 32GB of tree
 
 03/2025
 v0.1.5.x    initial advanced version for graphical output and implementing inotifywait for logging modified (signalled by events CREATE, ACCESS, MODIFIED, MOVE_TO, MOVE_FROM, DELETE)
+
+
+03/2025
+v0.1.2      versions including graphical visualization of data IO for the analyzed directory (and possible sub-directories)
+v0.1.1
+
+
+06/2024
+v0.1        initial published version
