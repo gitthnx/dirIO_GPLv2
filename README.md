@@ -2,7 +2,7 @@
 # dirIO
 
     Linux cmdline script for directory monitoring, e.g. data io (MB/s)
-    (limited to about 32GB sized directories, including sub-directories, for useful functional monitoring)
+    (limited to about 32GB directory path size, including sub-directories, for useful functional monitoring)
 
 ![dirIO graphical output](https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/dirIO_v0.1.5.2_2025-03-30.png)
 <!-- p align="left"> https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png -->   
