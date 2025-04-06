@@ -173,7 +173,7 @@ init_vars() {
     echo "  values shown are not verified and consistent, yet"
     echo "  this testing version is for functionality testing,"
     echo "  experiencing difficulties with large directories (delays, >32GB) and huge amount of files"
-    echo "  (btw, it's quite interesting watching a build directory during build/compilation.)"
+    echo "  (btw, it's quite interesting watching a build directory during compilation.)"
     echo "  thanks for @all Your interest"
     echo
     echo "===================================================================================================="
@@ -621,7 +621,9 @@ calculate_data_rate() {
 
     posYX 7 0 0
     printf '\e[150;7;3m' # Highlighted text
-    echo -e "$(date)     start_dir_size $(echo "scale=6; $start_dir_size/1024/1024" | bc) MB     current_dir_size $(echo "scale=6; $current_dir_size/1024/1024" | bc) MB     io diff $(echo "scale=6; ($current_dir_size-$start_dir_size)/1024/1024" | bc) MB  evntsum1T $(echo "scale=6; $evntszsum_/1024/1024" | bc) MB \033[0K"
+    echo -e -n "$(date)     start_dir_size $(echo "scale=6; $start_dir_size/1024/1024" | bc) MB     current_dir_size $(echo "scale=6; $current_dir_size/1024/1024" | bc) MB     io diff $(echo "scale=6; ($current_dir_size-$start_dir_size)/1024/1024" | bc) MB \033[0K"
+    #echo -e -n "  evntsum1T $(echo "scale=6; $evntszsum_/1024/1024" | bc) MB \033[0K"
+    echo ""
     evntszsum_=0
     n__=$(([ "$n_" -eq "0" ] && echo -n "base dir level") || ([ "$n_" -eq "1" ] && echo -n "1 dir level") || ([ "$n_" -eq "$depth_" ] && echo -n "all dir levels") || echo -n "$n_ dir levels")
     echo -e "pid_$pid_ err_$err vs_$intfyext d_$d_ m_$mode n_$n_ for ($n__ of) $directory ($uptime_) $(uptime | cut -d ',' -f 4-6) (1/5/15min avg*$(nproc)cores) fl# $flnr_ dir# $drnr_ \033[0K"
@@ -739,6 +741,16 @@ graphical_output() {
     cntr1=$((cntr1+1))
     [ "$cntr1" -gt "23" ] && cntr1=1 && rnd_=$((1-rnd_))
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
