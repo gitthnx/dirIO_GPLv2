@@ -16,7 +16,7 @@
 
        Usage: ./dirIO.sh  /directory/to/monitor
                                              
-       keys: search tree level       == 'n'        
+       keys: search tree level       == 'N'up 'n'dn        
              output mode             == 'm'        
              pause                   == 'p'        
              resume                  == ' ' or 'r' 
