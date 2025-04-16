@@ -37,8 +37,9 @@
       cp /usr/bin/inotifywait /dev/shm/
       (copying .libs folder not necessary)
 
-      # or from cloned git repository 'inotify-tools', 
-      # built './autogen.sh; mkdir build; cd build; ../configure; make -j12;', 
+      # or from cloned git repository 'inotify-tools'
+      # git clone https://github.com/gitthnx/inotify-tools 
+      # built './autogen.sh; mkdir build; cd build; ../configure; make -j12;' 
       # inside build folder: 'build/src/.libs'
       cp <path to inotify-tools repository>/build/src/inotifywait /dev/shm
       cp <path to inotify-tools repository>/build/src/.libs -R /dev/shm 
