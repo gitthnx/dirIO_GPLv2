@@ -1,8 +1,14 @@
 ............
 
-04/2025
-v0.1.6.1    reorganized output sections for changing terminal sizes (WIP)
+0?/2025
+v0.1.7.x    reorganized output sections for changing terminal sizes (WIP)
             improved start-up for analyzing filesystems with high amount of files within single folders (WIP)
+
+............
+
+04/2025
+v0.1.6.1    intermediate test version (slightly improved for huge filesystems and high amount of files), testing different approaches
+
 03/2025
 v0.1.6.0    improved start-up for analyzing filesystems larger than 32GB of tree size and extendended path levels
             (requiring adjusted version of 'inotify-tools' on v0.1.6.0.x versions for coherent functionality, because of logging file sizes is required)
