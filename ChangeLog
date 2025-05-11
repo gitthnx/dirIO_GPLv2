@@ -1,13 +1,13 @@
 ............
 
 0?/2025
-v0.1.7.x    reorganized output sections for changing terminal sizes (WIP)
-            improved start-up for analyzing filesystems with high amount of files within single folders (WIP)
+v0.1.7.x    improved start-up for analyzing filesystems with high amount of files within single folders (WIP)
 
 ............
 
 04/2025
 v0.1.6.1    intermediate test version (slightly improved for huge filesystems and high amount of files), testing different approaches
+            reorganized output sections for varying terminal sizes (WIP)
 
 03/2025
 v0.1.6.0    improved start-up for analyzing filesystems larger than 32GB of tree size and extendended path levels
