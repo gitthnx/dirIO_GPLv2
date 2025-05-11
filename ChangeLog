@@ -1,5 +1,10 @@
 ............
 
+??/2025
+v0.1.?.?    summary file/'output option/section' for biggest files/directories ( | tail -n 10 ) causing IO during monitoring (WIP)
+
+............
+
 0?/2025
 v0.1.7.x    improved start-up for analyzing filesystems with high amount of files within single folders (WIP)
 
