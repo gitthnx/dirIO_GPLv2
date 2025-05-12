@@ -1,0 +1,1024 @@
+Please create a bash shell script for Linux that replicates the core functionality of the following bash script, which monitors directory I/O activity using `inotifywait`.
+
+**However, the new script must be significantly optimized in terms of structure, coding efficiency, and readability, while preserving the key features and output goals described below.**
+
+Here is the original script for reference:
+
+```bash
+#!/bin/bash
+
+# Variable initialization
+
+version="v0.1.6.1\_test.debug"
+vdate="May, 2025"
+hugefs\_=35 #GB #above, starting with limited details for acceptable delay times
+
+\#trap '' INT #ignores <ctrl><c>
+
+# Signal handling functions
+
+sigterm\_handler() {
+\# Handle signal trapping with dynamic signal assignment
+signl="\$1" ; shift
+for sig ; do
+trap "\$signl \$sig" "\$sig"
+done
+}
+
+sigterm\_msg() {
+\# Display signal received message at specific screen position
+posYX 45 0 0
+echo -e "\$1 received, press 'q' or 'Q' to exit dirIO script \033\[0K"
+}
+
+# Initial screen clear and directory validation
+
+clear
+avail=\$( \[ ! -d "\$1" ] || \[ -z "\$1" ] && echo "0" || echo "1" ) # Check if directory exists and is provided
+if \[ "\$1" == "/" ]; then
+avail=0
+echo; echo "\*\*\* no root fs io monitoring recommended \*\*\*"\ # Prevent monitoring root filesystem
+fi
+
+# Argument validation
+
+if \[ "\$#" -eq "0" ] || \[ "\$#" -gt "1" ]; then
+echo " \$# \$#   \$1 \$1  directory path available \$avail"
+echo "Usage: \$0 '-h' | '--help' | '-?' | '/?'"
+key="q" # Default to quit if invalid arguments
+fi
+
+# Help menu definition with ANSI escape codes for formatting
+
+keysdef="                                             \033\[0K\n
+keys: search tree level == 'N'up 'n'dn\033\[0K\n
+output mode       == 'm'        \033\[0K\n
+pause             == 'p'        \033\[0K\n
+resume            == ' ' or 'r' \033\[0K\n
+clear screen      == 'c' or 'C' \033\[0K\n
+help              == 'h' or 'H' or '?'  \033\[0K\n
+quit              == 'q' or 'Q' \033\[0K\n
+\033\[0K\n
+version \$version                      \033\[0K\n
+\$vdate                                \033\[0K\n
+\033\[0K"
+
+# Exit if directory invalid or help requested
+
+if \[ -z "\$1" ] || \[ "\$avail" != "1" ] || \[ "\$#" -ne 1 ]; then
+echo "Usage: \$0  /directory/to/monitor"
+if \[ "\$1" == "-h" ] || \[ "\$1" == "--help" ] || \[ "\$1" == "-?" ] || \[ "\$1" == "/?" ]; then
+echo -e -n "\$keysdef"
+fi
+echo
+exit 1
+fi
+
+# Variable initialization
+
+directory="\$1"
+inotfy\_pth="/dev/shm/inotify.lg" # Path for inotify log
+pid\_="\$\$" # Current process ID
+start\_date=\$(date)
+start\_time=\$(date +%s) # Start time in seconds
+timeBtwIO=0
+timeNext=0
+timePrev=\$(date +%s.%2N) # Previous timestamp with nanoseconds
+tm0=\$(date +%s.%3N)
+cyclTime=0 cyclTime\_=\$(date +%s.%3N) cyclDiff=0
+llstr="" llstrinfo\_=""
+
+#
+
+paused=false
+mode=1 # Display mode (0-3)
+clrd=0
+n\_=10 # Directory depth level
+n2\_=0 # Previous depth level
+n\_ovr=0
+intfyext=-1
+d\_=0 #time delay variable index
+cntr1=1 # Counter for graphical output
+cntr2=1 # Counter for inotify output
+cntr3=0
+winh\_=1 # Window height percentage
+rnd\_=0 # Rounding toggle
+
+# arrays
+
+uplvl=50;
+dir\_size=0 dir\_size2=0 dir\_size\_du=0
+dir\_size\_=(\$(seq 0 \$((uplvl)) )) # Array for directory sizes at different depths
+start\_dir\_size\_=(\$(seq 0 \$((uplvl)) 1))
+llstr\_=(\$(seq 0 100 1)) llstrpth\_=(\$(seq 0 100 1)) llstrevnt\_=(\$(seq 0 100 1)) llstrisdir\_=(\$(seq 0 100 1))
+llstrflnm\_=(\$(seq 0 100 1)) llstrdpth\_=(\$(seq 0 100 1)) llstrsz\_=(\$(seq 0 100 1))
+lns=0
+tmdly\_=(\$(seq 0 10 1))
+stat\_=(\$(seq 0 15 1))
+stats\_=""
+
+#
+
+start\_dir\_size=0 current\_dir\_size=0 dir\_sum=0
+rate\_in=0 rate\_out=0
+sum\_in=0 sum\_out=0
+total\_input=0 total\_output=0
+vardf=0 vardf\_=0
+varstt=0 varstt\_=0
+evntszsum\_=0
+iodiff2=0 iodiff2\_=0
+
+# constants
+
+blksz=\$(stat -f -t \$directory | cut -d ' ' -f 5)
+MB=\$((1024*1024))
+GB=\$((1024*1024*1024))
+TB=\$((1024*1024*1024*1024))
+
+### Cursor positioning function
+
+posYX() {
+ROW=\$1
+\#tput cup "\${ROW#\*\[}" "\$2" # Move cursor to specified row and column
+tput cup 44 75
+echo -e "row \$1 col \$2   "        #\033\[0K"
+tput cup 45 0
+tput cup "\$1" "\$2"
+\[ "\$3" -ne "1" ] && echo -e "\e\[?25l" || echo -e "\e\[?25h" # Hide/show cursor
+}
+
+### add spaces to output
+
+spcs() {
+spaces=\$(printf "%\*s%s" \$x '' "\$line")
+echo "\$spaces"
+}
+
+### measure time delay between to time markers \$1=(0..10) \$2=tm\_\[0..10]=\$(date +%s.%3N) (start time)
+
+tmdly() {
+\#overlapping measurement periods?
+tmdly\_\[\$1]=\$(echo "scale=2; \$(date +%s.%6N)-\$tm0" | bc)
+tput cup 44 115
+echo -n "tmdly "
+for i\_ in \$(seq 0 \$((5)) ); do printf "%2.6f(%d) " \${tmdly\_\[\$((i\_))]} \$((i\_)); done
+echo -e -n "\033\[0K"
+tput cup 65 0
+}
+
+headln() {
+posYX 0 0 0
+echo "monitoring start: \$start\_date"" dirIO.sh \$version"
+posYX 1 100 0
+tput cup 1 100
+echo "directory size (find -type cmd) \$((dir\_size/1024)) kB,  directory size (du cmd) \$((dir\_size\_du/1024)) kB,  diff \$(((dir\_size-dir\_size\_du)/1024))kB"
+echo
+}
+
+# find /dev/shm -type f | awk -F/ 'NF > maxdepth { maxdepth = NF; file = \$0 }; END {print file}' | sed 's|\[^/]||g' | wc -c
+
+path\_depth() { echo "\${\*#/}" | awk -F/ '{print NF}'; }
+
+update\_nlevel\_usage() {
+dir\_size\_\[\$i\_]=\$(find "\$directory" -mindepth \$1 -maxdepth \$1 -type f,d -printf '"%h/%f"\n' | xargs stat --format="%s" | awk '{s+=\$1} END {print s}' 2> /dev/shm/find\_error0.lg)
+}
+
+### initialize variables/arrays
+
+init\_vars() {
+````
+
+echo
+echo
+echo "===================================================================================================="
+echo ""
+echo "  version: $version"
+echo ""
+echo "  errors and inconsistencies"
+echo "  values shown are not verified and consistent, yet"
+echo "  this testing version is still for options and functionality testing, "
+echo "  experiencing difficulties with large directories (delays, \>32GB) and huge amount of files"
+echo "  (btw, it's quite interesting watching a build directory during compilation.)"
+echo "  thanks for @all Your interest"
+echo
+echo "===================================================================================================="
+echo
+echo
+
+```
+
+input\_sum=0
+output\_sum=0
+
+echo "" > /dev/shm/inotify\_part.lg
+
+\#get block size
+blksz=\$(stat -f /dev/shm | grep -e 'Block size:' | cut -d ' ' -f 3)
+\#if directory is bigger than 50GB, full\_path for subdirectories is reduced
+echo \$(df -a \$directory)
+prtsz=\$( df -a \$directory | awk 'NR==2{print \$2}' )
+echo "size of partition \$directory is located on : "\$(( prtsz / (1024) ))" MB"
+
+if \[ \$((prtsz)) -gt \$((\$((hugefs\_))*1024*1024)) ]; then n\_ovr=1; else n\_ovr=0; fi
+echo "prtsz "\$prtsz" n\_ovr "\$((n\_ovr))
+
+```
+
+time {
+stats\_=$(echo `stat -f $directory`)
+inodnr\_tmp=`stat -f /dev/shm | tr '\n' ' ' | cut -d ':' -f 12-14`;
+echo "inodes stat "$(( `echo $inodnr_tmp | cut -d ' ' -f 2,4 | tr ' ' '-'` ))
+inodnr\_=$(echo $inodnr\_tmp | cut -d ' ' -f2)
+if [ $((n\_ovr)) -ne "1" ]; then
+  inodnr\_=$(du -s --inodes $directory)
+  echo "inodes du "$inodnr\_
+fi
+inodnr\_=$(df -i $directory)
+\#echo "inodes df "$inodnr\_
+inodprct\_=
+echo "inodes df used in $directory "$inodnr\_
+echo "percentage of all inodes for this partition "$inodprct\_
+
+base\_path=`echo "$directory" | grep -o '/' - | wc -l`                     \# \~0.0001s/GB
+full\_path=`find $directory -type d -printf '%d\n' | sort -rn | head -1`   \# \~0.06s/GB
+if [ $((n\_ovr)) -ne "1" ]; then full\_path\_=`find $directory -type d | sed 's|[^/]||g' | sort | tail -n1 | wc -c 2> /dev/shm/find_error1.lg`; fi \# \~0.06s/GB
+depth\_=$((base\_path+full\_path-1))
+if [ $((n\_ovr)) -ne "1" ]; then n\_=$((depth\_)); else n\_=0; fi
+
+echo
+if [ $((n\_ovr)) -ne "1" ]; then
+  flnr\_=$(find $directory -mindepth 0 -maxdepth 100 -type f -printf '"%h/%f"\\n' | wc -l)
+  drnr\_=$(find $directory -mindepth 0 -maxdepth 100 -type d -printf '"%h/%f"\\n' | wc -l)
+else
+  flnr\_=$(find $directory -mindepth 0 -maxdepth 1 -type f -printf '"%h/%f"\\n' | wc -l)
+  drnr\_=$(find $directory -mindepth 0 -maxdepth 1 -type d -printf '"%h/%f"\\n' | wc -l)
+fi
+echo "files in $directory "$flnr\_
+echo "directories in $directory "$drnr\_
+echo "full path levels: "$full\_path
+}
+
+time {
+
+# Initial directory size calculations
+
+if [ $((n\_ovr)) -ne "1" ]; then
+  dir\_size=$(find "$directory" -type f,d -printf '"%h/%f"\\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}') \# Size using find \# \~0.12s/GB
+  dir\_size2=$(find "$directory" -type f -printf '"%h/%f"\\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}') \# Size using find \# \~0.00002s/GB
+  dir\_size\_du=$(du -sb "$directory" | awk '{print $1}') \# Size using du \# \~0.35s/GB
+else
+  dir\_size=$(find "$directory" -mindepth 0 -maxdepth 1 -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}') \# Size using find \# \~0.00002s/GB
+  dir\_size2=$(find "$directory" -mindepth 0 -maxdepth 1 -type f -printf '%s\\n' | awk '{s+=$1} END {print s}') \# Size using find \# \~0.00002s/GB
+
+  \#time intense
+  \#dir\_size\_du=$(du -b -d 1 "$directory" | awk '{print $1}') | tail -n 1 | cut -d ' ' -f 1 \# Size using du \# \<-d 0\> \~0.12s/GB \<-d 1\> \~0.13s/GB
+  dir\_size\_du=$((dir\_size))
+fi
+\#start\_dir\_size=$((dir\_size\_du))
+  start\_dir\_size=$((dir\_size))
+  start\_dir\_size\_[48]=$((dir\_size))
+  start\_dir\_size\_[49]=$((dir\_size2))
+  start\_dir\_size\_[50]=$((dir\_size\_du))
+}
+
+time {
+if [ $((n\_ovr)) -ne "1" ]; then
+start\_dir\_size\_[0]=$(find "$directory" -mindepth 0 -maxdepth 0 -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}')
+dir\_size\_[0]=$(( start\_dir\_size\_[0]/(1*1) ))
+dir\_sum=$((dir\_size\_[0]))
+if [ $((n\_ovr)) -ne "1" ]; then
+  for i\_ in $(seq 1 $((depth\_-1)) ); do
+    start\_dir\_size\_[$i\_]=$(find "$directory" -mindepth $((i\_)) -maxdepth $((i\_)) -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}')
+  done
+else
+  for i\_ in $(seq 1 1 ); do
+    start\_dir\_size\_[$i\_]=$(find "$directory" -mindepth $((i\_)) -maxdepth $((i\_)) -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}')
+  done
+fi
+dir\_size\_[$i\_]=$(( start\_dir\_size\_[$i\_]/(1*1) ))
+dir\_sum=$((dir\_sum+dir\_size\_[$i\_]))
+sleep 0.001
+fi
+
+current\_dir\_size=$((start\_dir\_size))
+}
+
+\#check for inotifywait version
+echo
+echo "inotifywait versions:"
+inotifywait --help | head -n 1
+echo -n "/dev/shm/"$(/dev/shm/inotifywait --help | head -n 1)
+
+echo
+echo
+cat /proc/$BASHPID/maps | sort -u -t' ' -k5,5 | sort -t' ' -k 5
+echo
+
+\#sleep 5
+clear
+
+```
+
+}
+
+debug\_init() {
+
+```
+
+time {
+\#declare -a descr=("find\_files\&dirs" "find\_files" "du cmd")
+descr=('find\_files\&dirs' 'find\_files' 'du\_cmd')
+for i1\_ in $(seq 0 2 ); do
+  tput cup $((i1\_+1)) 15
+  printf "start\_dir\_size[%d] %-20s %12.6f" "$((i1\_))" "${descr[$i1\_]}" "$(echo "scale=6; $((start\_dir\_size\_[$((i1\_+48))]))/1024/1024" | bc)"
+  tput cup $((i1\_+1)) 75
+  echo $((start\_dir\_size\_[$((i1\_+48))]))
+  sleep 0.001
+done
+tput cup 4 15
+echo "files in $directory "$flnr\_
+tput cup 5 15
+echo "directories in $directory "$drnr\_
+
+# for comparing directory summaries
+
+posYX 7 15 0
+sum=0
+vtab=7
+for i2\_ in $(seq 0 $((depth\_)) ); do
+  tput cup $((i2\_+vtab)) 15
+  sum=$((sum+start\_dir\_size\_[$i2\_]))
+  printf "start\_dir\_size %02d  %12.6f \\033[0K\\n" "$i2\_" "$(echo "scale=6; $((start\_dir\_size\_[$((i2\_))]))/1024/1024" | bc)"
+done
+tput cup $((i2\_+vtab)) 15
+printf "start\_dir\_size     %12.6f \\033[0K\\n" "$(echo "scale=6; $((sum))/1024/1024" | bc)"
+tput cup $((i2\_+vtab+1)) 15
+printf "                   %12.6f \\033[0K\\n" "$(echo "scale=6; $((sum))/1024/1024" | bc)"
+echo
+tput cup $((i2\_+vtab+3)) 15
+echo -n "du -sb   (cmd)      "; du -sb $directory
+tput cup $((i2\_+vtab+4)) 15
+printf "find (cmd)         %12.6f %12d" "$(echo "scale=6; $((dir\_size))/1024/1024" | bc)" "$dir\_size"
+tput cup $((i2\_+vtab+5)) 15
+printf "du -sb   (cmd)     %12.6f %12d" "$(echo "scale=6; $((dir\_size\_du))/1024/1024" | bc)" "$dir\_size\_du"
+echo
+} \#end time
+
+tput cup $((i2\_+vtab+14)) 15
+echo
+echo "enter 'q' or 'Q' for exit, 'c' or 'C' for to continue"
+while true; \#[ "$key" \!= "q" ] | [ "$key" \!= "Q" ]
+do
+\#read -r -s -N 1 key
+read -r -s -t 2.0 -N 1 key
+if [ -n "$key" ]; then
+    tput cup 1 15
+    echo -e -n "  key(s) pressed: '$key'                    "
+    \#printf %d\\n "'$key"
+fi
+if [ "$key" == "q" ] || [ "$key" == "Q" ]; then clear; posYX 1 0 1; tput cup 1 0; exit; fi
+if [ "$key" == "c" ] || [ "$key" == "C" ]; then break; fi
+done
+clear
+
+\#items in subfolders
+
+# find /home/server -maxdepth 1 -type d | while read -r dir; do printf "%s:\\t" "$dir"; find "$dir" -type f,d | wc -l; done
+
+# tree -L 1 /home/server | tail -1
+
+```
+
+}
+
+### process inotifywait log file(s)
+
+proc\_lgfls() {
+
+# Check inotify log and display recent changes
+
+```
+
+tput cup 47 0
+
+\#sorting for filesize, event and without duplicate
+sort -t ' ' -k 8 -n /dev/shm/inotify.lg \> /dev/shm/inotify\_part1.lg
+
+inputoutput=$( awk '{
+if ($3 \~ /DELETE/ || $3 \~ /MOVED\_TO/)
+    $8 = -$8;
+else if ($3 \~ /ACCESS/)
+    $8 = 0;
+
+delete\_sum += ($3 \~ /DELETE/ || $3 \~ /MOVED\_TO/ ? $8 : 0);
+modify\_sum += ($3 \~ /CREATE/ || $3 \~ /MOVED\_FROM/ || $3 \~ /MODIFY/ ? $8 : 0);
+moved\_from\_sum += ($3 \~ /ACCESS/ ? $8 : 0);
+}
+END {
+    if (delete\_sum \!= 0)
+        print "DELETE/MOVED\_TO:", delete\_sum;
+    else if (modify\_sum \!= 0)
+        print "CREATE/MOVED\_FROM/MODIFY:", modify\_sum;
+    else if (moved\_from\_sum \!= 0)
+        print "ACCESS:", moved\_from\_sum;
+}' /dev/shm/inotify\_part1.lg )
+
+llstrinfo\_\_="$(cat /dev/shm/inotify\_part1.lg | grep -a -o  -e 'CREATE' -e 'DELETE' -e 'MOVE\_TO' -e 'MOVE\_FROM' -e 'MODIFY' -e 'ACCESS' | sort | uniq -c | tr ' ' '.' | tr '\\n' ' ' )"
+
+wtchs=$(wc -l /proc/$pid2\_/fdinfo/3 | cut -d ' ' -f 1)
+llstrinfo\_=$(echo "$llstrinfo\_\_" | tail -c 127)  \#" $((wtchs))"
+
+:\> /dev/shm/inotify\_part.lg
+sort -u -t' ' -k3,4 /dev/shm/inotify\_part1.lg | sort -t' ' -k 2 | tail -n 15 | awk '\!/^[[:blank:]]\*$/' \> /dev/shm/inotify\_part.lg
+
+# limit size of log file to 1MB
+
+flsz=$(du -b  /dev/shm/inotify.lg | cut -f 1)
+if [ "$((flsz))" -gt "$((4\*1024))" ]; then
+  tail -n 25 /dev/shm/inotify.lg \> /dev/shm/inotify.lgtmp
+  cat /dev/shm/inotify.lgtmp \> /dev/shm/inotify.lg
+fi
+\#echo "" \> /dev/shm/inotify.lg
+:\> /dev/shm/inotify.lg
+
+cntr2=0
+lglim=15
+llstr\_[0]=0
+llstr\_[1]=""
+iodir\_=0
+evntszsum=0
+
+if [ "$lns" -gt "65" ] && [ "$mode" -gt "0" ]; then
+  if [ "$clrd" -eq "1" ]; then
+    \#clear
+    clrd=0
+  fi
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        \#check for inotify version (including file size format option %x)
+
+        if [ $intfyext -eq "-1" ]; then  \# =\~ "%x"
+        tput cup 67 5
+        echo -n "intfyext $intfyext   line: $line "
+        [[ "$line" == *"%x"* ]] && echo "(parsed %x: true)" || echo "(parsed %x: false)"
+          if [[ "$line" == *"%x"* ]]; then
+            intfyext=0
+          else
+            intfyext=1
+          fi
+        fi
+
+        len\_=$(echo "$line" | wc -c)
+
+        \# remove duplicates, keep biggest file size changes
+        \#awk '\!seen[$3]++' filename
+
+        if [ $((intfyext)) -eq 1 ]; then
+          size\_\_=$(echo $line | cut -d ' ' -f 8)
+        fi
+        if [ "$size\_\_" \!= "''|*[\!0-9]*" ]; then size\_\_=0; fi
+
+        llstr\_[$((cntr2+2))]=$line
+        llstrpth\_[$((cntr2+2))]=$(echo $line | sed 's/,CREATE.*|,DELETE.*|,MOVE\_TO.*|,MOVE\_FROM.*|,MODIFY.*|,ACCESS.*//' | cut -d ',' -f 1 )
+        llstrflnm\_[$((cntr2+2))]=$(echo $line | sed 's/,CREATE.*|,DELETE.*|,MOVE\_TO.*|,MOVE\_FROM.*|,MODIFY.*|,ACCESS.*//' | cut -d ',' -f 2,3 )
+        llstrevnt\_[$((cntr2+2))]=$(echo $line | grep -a -o  -e 'CREATE' -e 'DELETE' -e 'MOVE\_TO' -e 'MOVE\_FROM' -e 'MODIFY' -e 'ACCESS' )
+        llstrisdir\_[$((cntr2+2))]=$(echo $line | grep -a -o  -e 'ISDIR' )
+        case "${llstrevnt\_[$((cntr2+2))]}" in
+          "CREATE") iodir\_=1; ;;
+          "DELETE") iodir\_=-1; ;;
+          "MOVE\_TO") iodir\_=-1; ;;
+          "MOVE\_FROM") iodir\_=1; ;;
+          "MODIFY") iodir\_=1; ;;
+        esac
+        flpth="${llstrpth\_[$((cntr2+2))]}""${llstrflnm\_[$((cntr2+2))]}"
+        llstrdpth\_[$((cntr2+2))]=$((`echo "$flpth" | grep -o '/' - | wc -l` -1 -base\_path )) \#path\_depth "/dev/shm"
+        if [ $((intfyext)) -eq 1 ]; then  \# inotifywait extended version (format %x option for file/dir size) available?
+          llstrsz\_[$((cntr2+2))]=$(echo $line | cut -d ' ' -f 8)
+          evntsz\_=${llstrsz\_[$((i))]};
+          evntszsum=$(( evntszsum + llstrsz\_[$((cntr2+2))] \* iodir\_ ))
+        fi
+        if [ $((size\_\_)) -gt $((llstr\_[0])) ]; then
+            llstr\_[0]=$(echo $line | cut -d ' ' -f 8)
+            llstr\_[1]=$(echo -n "$line")
+        fi
+
+        cntr2=$((cntr2+1))
+    done \< "/dev/shm/inotify\_part.lg"
+
+    \#:\> /dev/shm/inotify\_part.lg
+
+    if [ $((evntszsum)) -ne 0 ]; then
+    if [ $((intfyext)) -eq 1 ]; then
+      [ $((evntszsum)) -ge $((1024\*1024)) ] && llstrinfo\_="$llstrinfo\_ evntsum: $(echo "scale=6; $evntszsum/1024/1024" | bc) MB" || llstrinfo\_="$llstrinfo\_ evntsum: $((evntszsum)) bytes" ;
+      evntszsum\_=$((evntszsum+evntszsum\_))
+    fi
+    fi
+    iodiff2=$((current\_dir\_size-start\_dir\_size))
+    llstrinfo\_="$llstrinfo\_  "$(echo "scale=6; ($iodiff2-$iodiff2\_)/1024/1024" | bc)" MB "$inputoutput
+    iodiff2\_=$((iodiff2))
+
+    for i in $(seq 2 $((cntr2+1)) ); do
+      if [ $mode -gt 0 ]; then
+        if [ $cntr2 -le $((lglim+1)) ]; then
+          tput cup $((i+47-2)) 0;
+          echo -e -n "$((i-2)) $(echo "${llstrpth\_[$((i))]}" | tail -c 127)   ";
+          echo -e -n "$(echo "${llstrflnm\_[$((i))]}" | tail -c 127)   ";
+          echo -e -n "${llstrevnt\_[$((i))]}  ";
+          echo -e -n "${llstrisdir\_[$((i))]}  ";
+          echo -e -n "${llstrdpth\_[$((i))]}  " | tr -d '\\n';
+          if [ $((intfyext)) -eq 1 ]; then
+            [ ${llstrsz\_[$((i))]} -ge $((1024*1024)) ] && echo -e -n "$((${llstrsz\_[$((i))]}/(1024*1024) )) MB" || echo -e -n "${llstrsz\_[$((i))]} B";
+          fi
+          echo -e -n "$(echo "$llstrinfo\_" | tail -c 127)   \\033[0K"
+        fi;
+      fi;
+    done
+
+    for i in $(seq $((cntr2+1)) $((lglim+1)) ); do tput cup $((47+i)) 0; printf "\\033[2K"; done
+else
+  if [ "$clrd" -eq "0" ]; then
+    for i in $(seq $((47)) $((64)) ); do tput cup $((i)) 0; printf "\\033[2K"; done
+    clear
+    clrd=1
+  fi
+  posYX 47 0 0
+  echo -e "no io \\033[2K"
+  \#tput cup 65 0
+fi
+
+```
+
+}
+
+### I/O monitoring function
+
+monitor\_io() {
+
+```
+
+    \# Update directory size based on depth level
+      \#tm0=$(date +%s.%6N)
+      if [ "$paused" = false ]; then
+        if [ $((n\_ovr)) -ne "1" ]; then
+          current\_dir\_size=$(find "$directory" -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}'  )
+
+        for i in $(seq 0 $((depth\_-1)) ); do
+        \#for i in "0" "1" "2" "3"; do
+          \#dir\_size\_[$i]=$(find "$directory" -mindepth $((i)) -maxdepth $((i)) -type f,d -printf '"%h/%f"\\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}' 2\> /dev/null )
+          dir\_size\_[$i]=$(find "$directory" -mindepth $((i)) -maxdepth $((i)) -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}' 2\> /dev/null )
+          sleep 0.001
+        done
+
+        fi
+      fi
+
+    posYX 2 0 0
+    var1=$(bc -l \<\<\< "scale=2;$dir\_sum/(1024\*1024)")
+    echo -e "  start\_dir\_size $dir\_sum $var1 MB "
+    posYX 3 50 0
+    tput cup 3 50
+      printf "(subdir\_level)"
+    tput cup 3 75
+    \#for i in $(seq 0 $((10)) ); do echo -e -n "${start\_dir\_size\_[$i]}*($i) \\033[0K"; done
+    for i in $(seq 1 $((10)) ); do printf "%12.0f*(%d)" $((start\_dir\_size\_[$i])) $((i)); done
+
+    if [ "$paused" = false ]; then
+      if [ $((n\_ovr)) -eq "1" ]; then
+      cntr3=$((cntr3+1))
+      \#time dir\_size\_[$((cntr3))]=$(find "$directory" -mindepth $((cntr3)) -maxdepth $((cntr3)) -type f,d -printf '"%h/%f"\\n' | xargs stat --format="%s" | awk '{s+=$1} END {print s}' 2\> /dev/null )
+      dir\_size\_[$((cntr3))]=$(find "$directory" -mindepth $((cntr3)) -maxdepth $((cntr3)) -type f,d -printf '%s\\n' | awk '{s+=$1} END {print s}' 2\> /dev/shm/find\_error3.2.lg)
+      \#dir\_size\_[$((cntr3))]=0;
+      if [ $((cntr3)) -gt $((depth\_)) ]; then
+        cntr3=0
+        current\_dir\_size=0
+        for i in $(seq 0 $((depth\_-1)) ); do
+          current\_dir\_size=$((current\_dir\_size))+${dir\_size\_[$((i))]}
+        done
+      fi
+      n\_=$((cntr3))
+      fi
+    fi
+    \#}
+
+    var1=$(bc -l \<\<\< "scale=2;$((current\_dir\_size))/(1024\*1024)")
+    tput cup 4 0
+    echo -e "  current\_dir\_size $((current\_dir\_size)) $var1 MB "
+    tput cup 4 50
+    printf "n: %9.0f %d(%d)   " $((dir\_size\_[$n\_])) $n\_ $depth\_
+    tput cup 4 75
+    for i in $(seq 1 $((10)) ); do printf "%12.0f\_(%d)" $((dir\_size\_[$i])) $((i)); done
+
+    n2\_=$((n\_))
+
+tput cup 44 5
+lns=$(tput lines)
+cols=$(tput cols)
+echo -e "tput lines $lns cols $cols lgfl\_lines $cntr2 cycl1T "$cyclDiff"s        "
+tput cup 12 5
+
+```
+
+}
+
+# Data rate calculation function
+
+calculate\_data\_rate() {
+
+```
+
+if [ $((n\_ovr)) -ne "1" ]; then
+  flnr\_\_=$(find $directory -mindepth 0 -maxdepth 100 -type f -printf '"%h/%f"\\n' | wc -l)
+  drnr\_\_=$(find $directory -mindepth 0 -maxdepth 100 -type d -printf '"%h/%f"\\n' | wc -l)
+else
+  flnr\_\_=$(find $directory -mindepth 0 -maxdepth 1 -type f -printf '"%h/%f"\\n' | wc -l)
+  drnr\_\_=$(find $directory -mindepth 0 -maxdepth 1 -type d -printf '"%h/%f"\\n' | wc -l)
+fi
+wtchs\_=$(wc -l /proc/$pid2\_/fdinfo/3 | cut -d ' ' -f 1)
+
+posYX 7 0 0
+printf '\\e[150;7;3m' \# Highlighted text
+echo -e -n "$(date)     start\_dir\_size $(echo "scale=6; $start\_dir\_size/1024/1024" | bc) MB     current\_dir\_size $(echo "scale=6; $current\_dir\_size/1024/1024" | bc) MB     io diff $(echo "scale=6; ($current\_dir\_size-$start\_dir\_size)/1024/1024" | bc) MB \\033[0K"
+echo -e -n "  evntsum1T $(echo "scale=6; $evntszsum\_/1024/1024" | bc) MB \\033[0K"
+echo -e -n "   fl\# $flnr\_ dir\# $drnr\_ intfy\_wtchs $wtchs \\033[0K"
+echo ""
+evntszsum\_=0
+n\_\_=$(([ "$n\_" -eq "0" ] && echo -n "base dir level") || ([ "$n\_" -eq "1" ] && echo -n "1 dir level") || ([ "$n\_" -eq "$depth\_" ] && echo -n "all dir levels") || echo -n "$n\_ dir levels")
+echo -e -n "pid\_$pid\_ $pid3\_ err\_$err n\_ovr\_$n\_ovr vs\_$intfyext d\_$d\_ m\_$mode n\_$n\_ for ($n\_\_ of) $directory ($uptime\_) $(uptime | cut -d ',' -f 4-6) (1/5/15min avg\*$(nproc)cores)\\033[0K"
+echo -e -n "   fl\# $flnr\_\_ dir\# $drnr\_\_ intfy\_wtchs $wtchs\_ \\033[0K"
+echo ""
+printf '\\e[0m' \# Reset formatting
+
+now\_=$(date +%s)
+uptime\_=$((now\_-start\_time))
+
+data\_rate\_output=$((current\_dir\_size - dir\_size))
+echo -e "  data\_io\_rate $data\_rate\_output B/s \\033[0K"
+dir\_size=$((current\_dir\_size))
+if [ "$data\_rate\_output" -le 0 ]; then
+    input\_sum=$((input\_sum+data\_rate\_output))
+    in\_sum\_float=$(echo "scale=3; $input\_sum/(1024*1024)" | bc)
+else
+    output\_sum=$((output\_sum+data\_rate\_output))
+    out\_sum\_float=$(echo "scale=3; $output\_sum/(1024*1024)" | bc)
+fi
+
+echo -e "  data io rate: $data\_rate\_output bytes/s  $(echo "scale=4; $data\_rate\_output/1024/1024" | bc) MB/s \\033[0K"
+echo -e "  data io sum: $input\_sum  $output\_sum bytes  $(echo "scale=6; $input\_sum/1024/1024" | bc)  $(echo "scale=6; $output\_sum/1024/1024" | bc) MB   \\033[0K"
+echo -e "  data io sum: $in\_sum\_float   $out\_sum\_float MB ($uptime\_) \\033[0K"
+printf "\\033[2K"
+
+# Display detailed rates if mode \> 2
+
+if [ "$sum\_in" -ge "$((MB))" ]; then
+    sum\_in\_="$((sum\_in/$MB))MB"
+elif [ "$sum\_in" -ge "1024" ]; then
+    sum\_in\_="$((sum\_in/1024))kB"
+else
+    sum\_in\_="$sum\_in B"
+fi
+
+```
+
+# Calculate I/O rates
+
+```
+
+rate\_io=$((current\_dir\_size - dir\_size))
+if [ "$rate\_io" -gt 0 ]; then
+    rate\_in=$((rate\_in+rate\_io))
+    sum\_in=$((sum\_in+rate\_in))
+elif [ "$rate\_io" -lt 0 ]; then
+    rate\_out=$((rate\_out+rate\_io))
+    sum\_out=$((sum\_out+rate\_out))
+fi
+if [ "$rate\_io" -ne 0 ]; then
+    timeNext="$(date +%s.%2N)"
+    timeBtwIO=$(echo "$timeNext-$timePrev" | bc)
+    \#timeBtwIO=$(echo "scale=2; $timeNext-$timePrev" | bc)
+    timePrev=$timeNext
+fi
+dir\_size=$((current\_dir\_size))
+
+if [ "$mode" -eq "0" ]; then
+  tput cup 47 50
+  echo -e "press key 'm' for to continue graphical output (now mode=='0')"
+elif [ "$mode" -ge "2" ]; then
+  tput cup 5 100
+  echo -e "df: avail $((vardf)) kB,  previous run df $(echo "scale=6; $((vardf\_))/1024" | bc)*MB,  diff $(echo "scale=6; $((vardf*-vardf))/1024" | bc)*MB \\033[0K"
+  tput cup 6 100
+  echo -e "stat: avail $((varstt\*blksz/1024)) kB,  previous run stat $((varstt*\*blksz/1024)) kB,  diff $(echo "scale=6; $(((varstt\_-varstt)\*blksz))/1024/1024" | bc)*MB \\033[0K"
+  tput cup 7 100
+  echo -e "stat: $stats* \\033[0K"
+
+  tput cup 43 5
+  echo -e "input/output data avg\_rate/analysis\_runtime:  $((input\_sum/uptime\_))  bytes/sec\\t $((input\_sum/1024/uptime\_))  kB/s\\t  $(echo "scale=6; $input\_sum/1024/1024/$uptime\_" | bc) MB/s  $((output\_sum/uptime\_)) bytes/sec\\t $((output\_sum/1024/uptime\_)) kB/s\\t  $(echo "scale=6; $output\_sum/1024/1024/$uptime\_" | bc) MB/s \\033[0K"
+else
+  for i in $(seq 5 6); do posYX "$i" 0 0; printf "\\033[2K"; done
+  for i in $(seq 40 41); do posYX "$i" 0 0; printf "\\033[2K"; done
+fi
+
+IFS=';' read -sdR -p $'\\E[6n' ROW COL \# Get cursor position
+pos=${ROW\#\*[}
+
+```
+
+}
+
+# Graphical output function
+
+graphical\_output() {
+posYX 15 0 0
+IFS=';' read -sdR -p \$'\E\[6n' ROW COL
+gpos=\${ROW#\*\[}
+pos=\$((gpos+cntr1))
+
+```
+
+data\_io=$((${data\_rate\_output\#-}))
+if [ ${data\_rate\_output\#-} -ge $((10*1024*1024*1024)) ]; then relh\_pos=19; elif [ $data\_io -ge $((1024*1024*1024)) ]; then relh\_pos=16; elif [ $data\_io -ge $((1024*1024*1024)) ]; then relh\_pos=11; elif [ $data\_io -ge $((512*1024*1024)) ]; then relh\_pos=9; elif [ $data\_io -ge $((128*1024*1024)) ]; then relh\_pos=7; elif [ $data\_io -ge $((1024*1024)) ]; then relh\_pos=5; elif [ $data\_io -ge $((512*1024)) ]; then relh\_pos=4; elif [ $data\_io -ge $((64*1024)) ]; then relh\_pos=3; elif [ $data\_io -ge $((1*1024)) ]; then relh\_pos=2; elif [ $data\_io -ge $((64)) ]; then relh\_pos=1; else relh\_pos=$((data\_io/(22*1024)));  fi   \#relh\_pos=$((data\_io/255));
+
+date\_=$([ "$rnd\_" -eq "1" ] && date "+%H:%M:%S.%3N" || date "+%H:%M:%S.%2N")
+
+tput cup "$pos" 5
+
+[ "$data\_io" -eq "0" ] && ioMBps='' || ioMBps=$(echo "scale=4; $data\_rate\_output/1024/1024" | bc)" MB/s"
+
+[ "$data\_io" -ne "0" ] && echo -e "\\033[1K$date\_ $data\_rate\_output bytes/s "$timeBtwIO"s \\033[0K" || echo -e "   \\033[1K$date\_ \\033[0K"
+\#[ "$data\_rate\_output" -lt 0 ] && tput cup "$pos" 53 && echo -e -n "$ioMBps" || [ "$data\_rate\_output" -gt 0 ] && tput cup "$pos" 112 && printf "%9s" $ioMBps
+if [ "$data\_rate\_output" -lt 0 ]; then tput cup "$pos" 53; echo -e -n "$ioMBps"; fi
+[ "$data\_rate\_output" -gt 0 ] && tput cup "$pos" 112 && printf "%9s" $ioMBps
+
+tput cup "$pos" 70; echo -e -n "|"
+[ "$data\_rate\_output" -le 0 ] && tput cup "$pos" $((90-relh\_pos)) || tput cup "$pos" 91
+for i in $(seq 1 "${relh\_pos\#-}"); do printf "\~"; done
+tput cup "$pos" 90; echo -e -n "|"
+tput cup "$pos" 110; echo -e -n "|"
+llstr\_\_=$(echo ${llstr\_[1]} | cut -d ' ' -f 5,9)
+llstr\_\_\_=$(echo ${llstr\_[1]} | cut -d ' ' -f 8)
+tput cup "$pos" 150; printf "%s %s " "$llstrinfo\_"; echo -e -n "\\n \\033[0K";
+llstrinfo\_=""
+
+cntr1=$((cntr1+1))
+[ "$cntr1" -gt "23" ] && cntr1=1 && rnd\_=$((1-rnd\_))
+
+```
+
+}
+
+# init variables
+
+init\_vars
+\#debug\_init
+if \[ \$((n\_ovr)) -eq "1" ]; then
+n\_=0
+
+# paused=1
+
+fi
+
+prtsz=\$( df -a \$directory | awk 'NR==2{print \$2}' )
+echo "size of partition located on \$directory: "\$(( prtsz / (1024) ))" MB"
+if \[ \$((prtsz)) -gt \$((1024*1024*1024)) ]; then n\_=0; fi
+
+# Start inotifywait background process
+
+# git clone [https://github.com/gitthnx/inotify-tools](https://github.com/gitthnx/inotify-tools)
+
+# cd inotify-tools; ./autogen.sh; mkdir build; cd build; ../configure; make -j12; cp src/inotifywait /dev/shm; cp src/.libs -R /dev/shm; cd ../..;
+
+/dev/shm/inotifywait -e create,modify,move,delete -r -m --timefmt "%m/%d/%Y %H:%M:%S" --format "\[%T] %w,%f,%e,%x" -o "\$inotfy\_pth" --exclude /dev/shm/inotify.lg "\$directory" 1> /dev/shm/inotify\_stdout.lg 2> /dev/shm/inotify\_error.lg &
+
+pid2\_=\$! #?
+pid3\_=\$(pgrep inotifywait)
+echo "pid of inotifywait&: \$!" > /dev/shm/inotify\_.msg
+
+\#number of watches established?
+wtchs=\$(wc -l /proc/\$pid2\_/fdinfo/3 | cut -d ' ' -f 1)
+\#cat /proc/1254331/fdinfo/3 | wc -l # | xxd
+
+# Startup display
+
+headln
+
+sleep 0.01
+
+posYX 1 0 0
+
+# Main monitoring loop
+
+while true; do
+
+```
+
+# 1 cycle time \# avg xtimes cycle time?
+
+cyclTime="$(date +%s.%3N)"
+cyclDiff=$(echo "$cyclTime-$cyclTime\_" | bc)
+cyclTime\_=$cyclTime
+
+headln
+tput cup 12 5
+
+tm0=$(date +%s.%6N)
+if [ "$paused" = false ]; then
+vardf\_=$((vardf))
+vardf=$(df -k $directory | tail -n 1 | tr -s ' ' | cut -d ' ' -f 4 2\> /dev/shm/df\_error1.lg)  \# used   \# sed -e 's/  \*/ /g' multiple spaces to one
+varstt\_=$((varstt))
+varstt=$(stat -f -t $directory | cut -d ' ' -f 9 2\> /dev/shm/stat\_error1.lg)  \#df --block-size=4096 --no-sync $directory)
+stats\_=$(echo `stat -f $directory` | tail -c 100)
+fi
+tmdly 1
+tput cup 12 5
+
+\#tm0=$(date +%s.%6N)
+
+if [ "$paused" = false ]; then
+  proc\_lgfls
+fi
+tput cup 12 5
+tmdly 3
+
+if [ "$paused" = false ]; then
+  \#if [ "$vardf" -ne "$vardf\_" ]; then
+    monitor\_io
+  \#fi
+fi
+tput cup 12 5
+tmdly 2
+
+\#if [ "$paused" = false ]; then
+  calculate\_data\_rate \# Issues: hard links, permissions, 'No such file or directory'
+  if [ "$lns" -gt "25" ] && [ "$mode" -gt "0" ]; then graphical\_output; fi
+\#fi
+tmdly 5
+tput cup 12 5
+
+read -r -s -t 1 -N 1 key \# Non-blocking key input
+\#read -r -s -t 0.1 -N 1 key \# Non-blocking key input
+tput cup 45 5
+posYX 45 0 0
+case "$key" in
+    "q"|"Q")
+        paused=true
+        clear
+        posYX 3 0 0
+        echo "monitoring stop: $(date) uptime on I/O analysis: "$uptime\_"s"
+        echo -e -n "  key(s) pressed: '$key'"
+        echo
+        posYX 7 0 0
+        ps ax | grep inotify | grep -v 'grep'
+        kill -SIGTERM "$pid2\_"
+        IFS=';' read -sdR -p $'\\E[6n' ROW COL \# Get cursor position
+        pos=${ROW\#\*[}
+        sleep 1
+        for i in $(seq  $((pos-1))  $(tput lines) 1 ); do posYX "$i" 0 0; printf "\\033[2K"; done
+
+        posYX 7 0 0
+        ps aux | grep inotify | grep -v 'grep'
+        IFS=';' read -sdR -p $'\\E[6n' ROW COL \# Get cursor position
+        pos=${ROW\#\*[}
+        for i in $(seq  $((pos-1))  $(tput lines)); do tput cup "$i" 0; printf "\\033[2K"; done
+
+        \#manually SIGTERM additional inotifywait?
+
+        sleep 0.01
+        posYX 0 0 1
+        echo "" \> /dev/shm/inotify.lg
+        echo "" \> /dev/shm/inotify\_part.lg
+        sleep 1
+        clear
+        break
+        ;;
+    "p")
+        paused=true
+        mode\_=$((mode))
+        tput cup 45 50
+        echo -e "directory I/O analysis paused, enter \<space\> or key 'r' to resume \\033[0K"
+        ;;
+    $'\\x0a'|$' '|r)
+        mode=$((mode\_))
+        paused=false
+        tput cup 45 50
+        echo -e "directory I/O analysis resumed \\033[0K"
+        for i in $(seq 45 55); do posYX "$i" 0 0; printf "\\033[2K"; done
+        ;;
+    "m")
+        mode=$((mode+1))
+        [ "$mode" -gt "3" ] && mode=0
+        ;;
+    "n")
+        n\_=$((n\_-1))
+        [ "$n\_" -lt "0" ] && n\_=$((depth\_))
+        tput cup 45 50
+        echo "n: $n\_($depth\_) previous:$n2\_ "
+        ;;
+    "N")
+        n\_=$((n\_+1))
+        [ "$n\_" -gt "$depth\_" ] && n\_=0
+        tput cup 45 50
+        echo "n: $n\_($depth\_) previous:$n2\_ "
+        ;;
+    "d")
+        d\_=$((d\_-1))
+        [ "$d\_" -lt "0" ] && d\_=5
+        ;;
+    "D")
+        d\_=$((d\_+1))
+        [ "$d\_" -gt "5" ] && d\_=0
+        ;;
+    "c"|"C")
+        clear
+        headln
+        ;;
+    "h"|"H"|"?")
+        mode\_=$((mode))
+        mode=0
+        posYX 47 0 0
+        echo -e -n "\\033[1K$keysdef\\033[0K"
+        for i in $(seq 1 10); do printf "\\033[2K"; done
+        ;;
+esac
+if [ -n "$key" ]; then
+    tput cup 45 5
+    echo -e -n "  key(s) pressed: '$key'                    "
+fi
+
+if [ "$paused" = true ]; then
+  if [ $((n\_ovr)) -eq "1" ]; then
+    tput cup 45 50
+    echo -e "directory I/O analysis paused, enter \<space\> or key 'r' to resume \\033[0K"
+  fi
+fi
+
+\#full\_path=`find $directory -type d -printf '%d\n' | sort -rn | head -1`
+\#depth\_=$((base\_path+full\_path-1))
+
+tput cup 12 5
+
+```
+
+done
+```
+
+**Requirements for the New, Optimized Script:**
+
+1.  **Core Functionality Match:** The new script must perform the same primary tasks:
+
+      * Monitor filesystem events (create, delete, modify, move) in a specified directory (`$1`) and its subdirectories using `inotifywait`.
+      * Track directory size changes over time.
+      * Calculate and display approximate I/O rates (bytes/sec or MB/sec).
+      * Calculate and display cumulative I/O totals.
+      * Display a buffer of recent filesystem events.
+      * Provide interactive control via single-key presses:
+          * `P`/`p`: Pause/Resume monitoring.
+          * `     `/`R`/`r`: Resume monitoring.
+          * `N`/`n`: Navigate/change the monitoring depth level for size calculation (+1/-1).
+          * `H`/`h`/`?`: Display help/key bindings.
+          * `Q`/`q`: Quit the script cleanly.
+          * `C`/`c`: Clear the screen and redraw the display.
+      * Handle termination cleanly (e.g., via `Ctrl+C`).
+
+2.  **Optimized Structure:**
+
+      * Use clear, well-named functions for distinct logical blocks. Suggested functions:
+          * `check_dependencies()`: Verify `inotifywait`, `find`, `awk`, `tput`, `bc` (or handle floats natively if possible/needed) exist.
+          * `init_vars()`: Initialize all global variables, arrays, and configuration settings. Validate the target directory argument.
+          * `signal_handlers()` and `cleanup()`: Set up traps for signals like SIGINT and SIGTERM. The `cleanup` function should kill background processes (like `inotifywait`) and restore terminal settings.
+          * `get_directory_size(depth)`: A dedicated function to calculate the total size of files within the target directory up to the specified depth using `find -mindepth/-maxdepth` and `awk`.
+          * `calculate_metrics()`: Compute I/O rates and cumulative totals based on the current and previous directory size/timestamp. Handle floating-point calculations correctly (avoiding bash integer arithmetic errors).
+          * `process_inotify_event(line)`: Read a single line from the `inotifywait` output, parse it efficiently (preferably in a single `awk` call or robust bash parsing), and add it to a fixed-size array/buffer of recent events.
+          * `handle_input()`: Read a single key press using non-blocking `read -t` and update script state (pause, depth, etc.) based on the key.
+          * `update_display()`: Use `tput` commands (`tput clear`, `tput cup`, colors, etc.) to format and display the current metrics, event buffer, status, and help area on the terminal, clearing lines cleanly before writing.
+          * `display_help()`: Show the help message/key bindings, likely clearing the main display temporarily.
+          * `format_bytes(bytes)`: A helper function to convert byte counts into human-readable strings (KB, MB, GB, etc.), handling large numbers and floating-point correctly.
+
+3.  **Coding Efficiency:**
+
+      * Avoid unnecessary use of temporary files for processing `inotifywait` output. Pipe the output directly or use `coproc`.
+      * Optimize calls to external commands:
+          * Perform full directory size calculations (`get_directory_size`) less frequently (e.g., every few seconds, not every display update cycle), as this is expensive on large directories.
+          * Parse `inotifywait` output efficiently (e.g., single `awk`).
+          * Minimize redundant `stat`, `df`, `du`, etc., calls.
+      * Use bash built-ins where efficient (e.g., `[[...]]`, `((...))` for integer arithmetic).
+      * Handle large directories (\>32GB) gracefully by potentially adjusting the frequency of full size scans.
+      * Manage the recent events buffer size effectively (fixed size array, remove oldest).
+
+4.  **Readability and Maintainability:**
+
+      * Use clear, descriptive variable names (e.g., `target_directory`, `current_depth`, `io_rate_bytes_per_second`, `recent_events_buffer`).
+      * Include comprehensive comments explaining the purpose of functions, variables, and complex logic blocks.
+      * Maintain a consistent code style (indentation, variable assignment, command substitution using `$()`, conditionals using `[[...]]`, integer arithmetic using `((...))`, floating-point using `bc` or `awk` appropriately).
+      * Implement robust error handling (check for directory existence, handle non-numeric input where appropriate, check command availability).
+
+5.  **Output:**
+
+      * Display the following information clearly and formatted using `tput`:
+          * Target directory and current monitoring depth.
+          * Current total directory size (up to the monitored depth).
+          * Approximate I/O rate (MB/s).
+          * Cumulative I/O change since start.
+          * A scrolling buffer of recent filesystem events (`inotifywait` output).
+          * Current status (Running/Paused).
+          * Key bindings/basic help info or indicate how to access help.
+      * The display should be responsive to terminal resizing.
+
+The output should be the complete bash script implementation that meets these requirements, maintaining the original functionality but with a vastly improved codebase. Include a shebang `#!/bin/bash` and appropriate script options (`set -euo pipefail`).
