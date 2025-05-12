@@ -1,6 +1,3 @@
-Okay, here is a prompt text designed for an LLM, providing the source code and clearly outlining the requirements for creating an optimized bash script with the same functionality, focusing on structure, efficiency, and readability.
-
-````markdown
 Please create a bash shell script for Linux that replicates the core functionality of the following bash script, which monitors directory I/O activity using `inotifywait`.
 
 **However, the new script must be significantly optimized in terms of structure, coding efficiency, and readability, while preserving the key features and output goals described below.**
