@@ -1,0 +1,74 @@
+Create an optimized bash script for Linux that monitors directory I/O activity with these requirements:
+
+1. CORE FUNCTIONALITY:
+   - Real-time monitoring of filesystem events (create/modify/move/delete)
+   - Directory size tracking at multiple depth levels
+   - Data transfer rate calculations (input/output)
+   - Interactive controls with keyboard commands
+   - Both textual and graphical output modes
+
+2. PERFORMANCE OPTIMIZATIONS:
+   - Replace sequential find/stat calls with parallel processing
+   - Implement efficient inotifywait log parsing
+   - Minimize disk I/O operations
+   - Reduce array operations and memory usage
+   - Optimize ANSI cursor control sequences
+
+3. IMPROVED STRUCTURE:
+   - Modularize into clean functions:
+     * init_monitoring()
+     * process_events()
+     * calculate_stats()
+     * display_output()
+   - Standardize variable naming (remove excessive underscores)
+   - Add configuration section for easy tuning
+   - Implement proper error handling
+
+4. OUTPUT FEATURES:
+   - Preserve all original display elements:
+     * Directory size comparisons
+     * I/O rate graphs
+     * Event logs
+     * Help system
+   - Add new efficiency metrics
+   - Color-coded output based on load
+
+5. INTERACTIVE CONTROLS:
+   - Keep original key commands (q,p,m,n,N,etc)
+   - Add new hotkeys for toggling optimizations
+   - Dynamic help system showing current settings
+
+6. REQUIREMENTS:
+   - Maintain compatibility with original inotifywait format
+   - Keep 35GB threshold for "huge filesystem" mode
+   - Support all original ANSI formatting
+   - Preserve signal handling functionality
+
+The script should prioritize efficient resource usage while maintaining all monitoring capabilities of the original. Include clear documentation of optimizations made and their impact.
+
+Sample structure outline:
+
+#!/bin/bash
+# OPTIMIZED DIRECTORY I/O MONITOR v2.0
+
+CONFIG=(
+  HUGE_FS_THRESHOLD=35 # GB
+  SCAN_DEPTH=10
+  SAMPLE_RATE=1.0 # seconds
+)
+
+init_monitoring() {
+  # Optimized initialization
+}
+
+process_events() {
+  # Efficient inotify processing
+}
+
+display_output() {
+  # Cached output rendering
+}
+
+main() {
+  # Optimized main loop
+}
