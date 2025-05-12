@@ -1,0 +1,114 @@
+Write a Bash shell script for Linux that exactly reproduces the functionality of a provided directory I/O monitoring script, optimized for structure, readability, and efficiency (CPU, memory, and disk bandwidth usage). The original script monitors a specified directory using `inotifywait` to track file system events (create, modify, move, delete), calculates directory sizes at various depths, displays real-time I/O rates, and provides a terminal-based UI with key-based controls. Below is a detailed description of the required functionality, optimization goals, and constraints.
+
+### Functionality to Reproduce
+1. **Input Validation and Help Menu**:
+   - Accept a single directory path as an argument (e.g., `./script.sh /path/to/monitor`).
+   - Validate the directory exists and is not the root filesystem (`/`).
+   - Display a help menu with ANSI-formatted key bindings (`-h`, `--help`, `-?`, `/?`) showing commands:
+     - `N`/`n`: Increase/decrease directory depth level.
+     - `m`: Cycle output modes (0-3, controlling verbosity/graphical output).
+     - `p`: Pause monitoring.
+     - `r`/`space`: Resume monitoring.
+     - `c`/`C`: Clear screen.
+     - `h`/`H`/`?`: Show help.
+     - `q`/`Q`: Quit.
+   - Exit with an error message for invalid arguments or directories.
+
+2. **Initialization**:
+   - Set version (`v0.1.6.1_test.debug`) and date (`May, 2025`).
+   - Initialize variables for directory size, inotify log path (`/dev/shm/inotify.lg`), process IDs, and timestamps.
+   - Define constants for block sizes (`MB`, `GB`, `TB`) and arrays for tracking sizes at different depths (up to 50 levels).
+   - Determine if the directory's partition exceeds a size threshold (35GB) to adjust depth monitoring (`n_ovr` flag).
+
+3. **Directory Size and Depth**:
+   - Calculate initial directory size using `find` (files and directories) and `du` (for comparison).
+   - Compute directory depth using `find` to count subdirectories.
+   - Track file and directory counts (`flnr_`, `drnr_`).
+   - Store sizes at each depth level in an array (`start_dir_size_[]`).
+
+4. **Inotify Monitoring**:
+   - Run `inotifywait` in the background to monitor the directory recursively for events (`create`, `modify`, `move`, `delete`).
+   - Log events to `/dev/shm/inotify.lg` with a format including timestamp, path, filename, event type, and size (`%x` if supported).
+   - Limit log file size to 1MB, truncating older entries as needed.
+   - Process logs to extract events, calculate I/O differences, and display recent changes (up to 15 lines).
+
+5. **Real-Time Monitoring**:
+   - Periodically update directory size using `find` for specified depth levels.
+   - Calculate I/O rates (bytes/s, MB/s) by comparing current and previous sizes.
+   - Track cumulative input/output sums and display averages over uptime.
+   - Update inode and disk usage stats using `df` and `stat`.
+
+6. **Terminal UI**:
+   - Display a header with script version, start time, and directory sizes (`find` vs. `du`).
+   - Show real-time data:
+     - Current and initial directory sizes (MB).
+     - I/O rates and sums (bytes, MB).
+     - Event summaries (e.g., `CREATE`, `DELETE`, `MODIFY`) with sizes.
+     - Directory depth and file/directory counts.
+   - Use `tput` for cursor positioning and ANSI codes for formatting.
+   - Provide a graphical bar for I/O rates (using `~` characters, scaled by data rate).
+   - Display key presses and status messages (e.g., "paused", "resumed").
+   - Clear unused screen areas to avoid clutter.
+
+7. **User Controls**:
+   - Read key presses non-blocking (`read -r -s -t 1 -N 1`) to handle commands (see help menu).
+   - Pause/resume monitoring, cycle modes, adjust depth, clear screen, or quit.
+   - On quit, terminate `inotifywait`, clear logs, and display final stats.
+
+8. **Signal Handling**:
+   - Handle `SIGTERM` to display a message and allow quitting with `q`/`Q`.
+   - Ignore `SIGINT` (`Ctrl+C`) to prevent accidental termination.
+
+9. **Debug and Error Handling**:
+   - Log errors from `find`, `df`, `stat`, and `inotifywait` to `/dev/shm/*.lg`.
+   - Display debug info (e.g., inode stats, process maps) during initialization.
+   - Handle large directories (>35GB) by limiting depth and `find` operations.
+
+### Optimization Goals
+- **CPU Efficiency**:
+  - Minimize `find` and `du` calls by caching sizes and updating only changed subdirectories.
+  - Avoid redundant subprocesses (e.g., repeated `date`, `awk`, `grep`).
+  - Use efficient commands (e.g., `stat` instead of `find` where possible).
+- **Memory Efficiency**:
+  - Store logs in `/dev/shm` (tmpfs) to reduce disk I/O.
+  - Use arrays sparingly and avoid large temporary variables.
+  - Process logs incrementally to avoid loading large files into memory.
+- **Disk Bandwidth Efficiency**:
+  - Limit log file growth with truncation or rotation.
+  - Reduce writes to `/dev/shm` by batching updates.
+  - Avoid unnecessary file operations (e.g., redundant `echo` to files).
+- **Readability**:
+  - Use clear, descriptive function names (e.g., `calculate_dir_size`, `process_inotify_log`).
+  - Organize code into modular functions for initialization, monitoring, UI, and event processing.
+  - Add comments explaining logic and optimizations.
+  - Use consistent indentation (2-4 spaces) and variable naming (e.g., `dir_size` instead of `dir_size_`).
+- **Robustness**:
+  - Handle errors gracefully (e.g., missing `inotifywait`, permission issues).
+  - Support `inotifywait` versions with/without `%x` (size) format.
+  - Ensure compatibility with large directories and high event rates.
+
+### Constraints
+- Write the script in Bash for Linux, using standard tools (`inotifywait`, `find`, `du`, `df`, `stat`, `awk`, `tput`).
+- Ensure the script runs on a terminal with at least 80 columns and 25 lines.
+- Use `/dev/shm` for temporary files to leverage tmpfs.
+- Handle directories up to 50GB efficiently, with graceful degradation for larger sizes.
+- Maintain exact functional equivalence to the original script, including UI layout and key bindings.
+- Keep the script self-contained, with no external dependencies beyond `inotify-tools`.
+
+### Example Workflow
+1. User runs `./script.sh /home/user/data`.
+2. Script validates the directory, initializes variables, and starts `inotifywait`.
+3. Terminal displays:
+   - Header with version and directory sizes.
+   - Real-time I/O rates, event logs, and file/directory counts.
+   - Graphical bars for I/O activity.
+   - Status messages for key presses (e.g., "paused").
+4. User presses `m` to cycle modes, `p` to pause, or `q` to quit, with appropriate UI updates.
+
+### Notes
+- Assume `inotify-tools` is installed (e.g., `/dev/shm/inotifywait` available).
+- Optimize for directories with many files/subdirectories, but handle edge cases (e.g., empty directories).
+- Ensure the script exits cleanly, removing temporary files (`/dev/shm/inotify*.lg`).
+- If `inotifywait` supports `%x`, use it for event sizes; otherwise, estimate sizes via `stat`.
+
+Please provide the complete Bash script, ensuring it meets all functional requirements, is optimized for performance, and is highly readable. Include comments to explain key logic and optimizations.
