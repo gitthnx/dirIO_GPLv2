@@ -1,0 +1,59 @@
+Please create a bash shell script for Linux that functions as a real-time directory I/O monitor. The script should use `inotifywait` to observe filesystem events and display relevant metrics in a terminal user interface. The key requirement is that this new script must be a significant improvement in terms of *structure, coding efficiency, readability, and resource usage (CPU/memory/disk)* compared to typical non-optimized implementations, while fully replicating the core monitoring and display features described below.
+
+Here are the specific requirements for the new, optimized script:
+
+1.  **Core Monitoring Mechanism:**
+    * Utilize `inotifywait` running as a background process (`&`) to recursively watch the target directory (`-r`) for filesystem events.
+    * Events to monitor should include `create`, `delete`, `modify`, and `move`.
+    * Employ a named pipe (`mkfifo`) for reliable, non-blocking communication of `inotifywait` output to the main script loop. `inotifywait` should write its output to this pipe, and the main script should read from it.
+
+2.  **Metrics Calculation:**
+    * Periodically calculate the total size of files within the monitored directory subtree. This calculation should go up to a configurable depth level (`-maxdepth`) relative to the target directory.
+    * Determine the maximum natural depth of the target directory tree on startup and enforce that the selected monitoring depth does not exceed this or a hardcoded `MAX_DEPTH` limit.
+    * Calculate the approximate I/O rate (bytes per second) based on the change in directory size between periodic scans and the time elapsed since the last scan.
+    * Maintain a running total of the cumulative size change (bytes added or removed) since the script started, based on periodic scans.
+    * Use `bc` or `awk` for any necessary floating-point arithmetic operations (e.g., time differences, rate calculations, size conversions).
+
+3.  **Real-time Terminal User Interface (TUI):**
+    * Implement a dynamic, full-screen display using `tput` commands for cursor positioning (`tput cup`), clearing lines (`tput el`), colors (`tput setaf`, `tput op`), bold text (`tput bold`, `tput sgr0`), and cursor visibility (`tput civis`, `tput cnorm`).
+    * The TUI should display the following information, updating in place:
+        * The target directory being monitored.
+        * The current depth level being used for size calculation, along with the maximum detectable tree depth and the interactive selectable range.
+        * The current operational status (RUNNING or PAUSED).
+        * The total time elapsed since the script started, formatted as HH:MM:SS.
+        * The current total size of the monitored subtree (formatted in human-readable units: B, KB, MB, GB, TB, PB). Implement a helper function for byte formatting.
+        * The approximate I/O rate (display in bytes/s and MB/s).
+        * The cumulative size change (formatted in human-readable units).
+        * A buffer displaying the most recent filesystem events. Each event line should include a timestamp, the event type (using color coding for different event types like CREATE, DELETE, MODIFY, MOVE), and the affected path/filename. Attempt to include the size if available from `inotifywait`'s format (`%s`) or by using `stat` on the file path if necessary (handle deleted files gracefully). Limit the buffer size (e.g., display the last 20 events).
+    * The display should refresh periodically based on a configurable `UPDATE_INTERVAL_SEC` (allow fractional seconds).
+    * The TUI should gracefully handle terminal resizing.
+
+4.  **Interactive Controls:**
+    * Implement non-blocking keyboard input reading using `read -t`.
+    * Define and respond to the following key presses without requiring the Enter key:
+        * 'P' or 'p': Toggle PAUSED / RUNNING status.
+        * 'N': Increase the monitoring depth level (up to `MAX_DEPTH` and the actual tree depth).
+        * 'n': Decrease the monitoring depth level (down to a minimum of 1).
+        * 'H', 'h', or '?': Display a help message explaining key bindings and metrics, then return to the main display on any key press.
+        * 'Q' or 'q': Initiate a clean script exit.
+        * 'C' or 'c': Clear the terminal screen and force an immediate redraw of the TUI.
+        * ' ' (Space) or 'R', 'r': Explicitly resume monitoring if paused.
+
+5.  **Robust and Efficient Implementation:**
+    * **Optimization:**
+        * Avoid performing the full directory size calculation (`get_directory_size`) on every iteration of the main loop. Instead, perform it only when triggered by a timer (`SIZE_CHECK_INTERVAL_SEC`) or when the monitored depth changes.
+        * Read and process `inotifywait` events from the named pipe incrementally using `read -t`, avoiding the need to write to and re-read a large log file repeatedly.
+        * Implement a controlled sleep duration in the main loop based on the `UPDATE_INTERVAL_SEC` to prevent a tight loop and minimize CPU usage while maintaining display responsiveness.
+        * Use `find` efficiently for size calculation (e.g., limiting depth, using `-printf "%s"`).
+    * **Structure:** Organize the script into well-defined functions for initialization, the main monitoring loop, event processing, display updates, input handling, and cleanup.
+    * **Readability:** Use clear variable names, consistent indentation, and add comments where necessary.
+    * **Error Handling:** Use `set -euo pipefail` for robust error handling. Include checks for required commands. Handle potential errors from external commands gracefully (e.g., `stat` on deleted files).
+    * **Clean Exit:** Ensure the `cleanup` function correctly terminates the `inotifywait` background process, removes the named pipe, and restores the terminal state using `trap`.
+
+6.  **Argument Handling:**
+    * Accept an optional command-line argument specifying the target directory. If no argument is provided, default to the current directory (`.`).
+    * Validate the provided directory path: it must exist, be a directory, and not be the root directory (`/`). Exit with an error message if validation fails.
+
+7.  **Dependencies:** The script should depend on and utilize standard Linux command-line tools including `inotifywait`, `find`, `awk`, `tput`, `bc`, `date`, `sleep`, `kill`, `trap`, `readlink`, `stat`, `mkfifo`, `rm`. Include a check to ensure these commands are available.
+
+The goal is a clean, efficient, and reliable bash script that provides real-time directory I/O monitoring with an interactive terminal display, implemented with best practices for bash scripting. Do not include the code of the original script in the response.
