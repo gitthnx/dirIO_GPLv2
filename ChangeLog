@@ -2,7 +2,7 @@
 
 ??/2025
 v0.1.?.?    summary file/'output option/section' for biggest files/directories ( | tail -n 10 ) causing IO during monitoring (WIP)
-            alternative approach ( 1)_find/du 2)_inotifywait ) for getting IO events (WIP)
+            alternative approach ( 1)_find/du 2)_inotifywait ~~3)_bpftrace~~ ) for getting IO events (WIP)
 
 ............
 
