@@ -52,7 +52,7 @@
 
 
 ### notes & issues
-*1) 'graphical' visualization only partially implemented within scripts for testing functionality options in \<tmp\> directory*
+*1) 'graphical' visualization only partially implemented within scripts for testing functionality options in \<tmp\> directory* 
     
 <!-- pre><p align="left"><a href="https://github.com/gitthnx/dirIO_GPLv2"><img width="500" src="https://github.com/gitthnx/dirIO_GPLv2/blob/main/tmp/Screenshot_dirIO_light_graphical.png" /></a></p></pre -->
 
@@ -75,6 +75,9 @@
         git reset --hard
         git pull
 -->
+
+*2) size of deleted files don't appear with actual size from before deletion (WIP)*
+
 <br>
 
   
