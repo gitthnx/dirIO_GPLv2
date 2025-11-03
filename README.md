@@ -76,7 +76,7 @@
         git pull
 -->
 
-*2) size of deleted files don't appear with actual size from before deletion (WIP)*
+*2) size of deleted files doesn't appear with actual size from before deletion (WIP)*
 
 <br>
 
